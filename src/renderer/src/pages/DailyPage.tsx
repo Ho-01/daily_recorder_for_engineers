@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import DailyTodoSection from '../components/DailyTodoSection'
 import LogEntryCard from '../components/LogEntryCard'
 import * as journalApi from '../services/journalApi'
-import type { CategoryRecord, DailyJournalFile, LogEntry, TagRecord, TypeRecord } from '../types/journal'
+import type { CategoryRecord, DailyJournalFile, LogEntry, TagRecord, TodoItem, TypeRecord } from '../types/journal'
 import { todayIso } from '../utils/date'
 import { nextLogId } from '../utils/logId'
+import { nextTodoId } from '../utils/todoId'
 
 type LogSortMode = 'originalDesc' | 'original' | 'typeAsc' | 'typeDesc' | 'detailAsc' | 'detailDesc'
 
@@ -186,6 +188,56 @@ export default function DailyPage() {
     setDirty(true)
   }, [])
 
+  const addTodo = (title: string) => {
+    setDaily((prev) => {
+      if (!prev) return prev
+      const id = nextTodoId(prev.date, prev.todos)
+      const item: TodoItem = { todoId: id, title, done: false }
+      setDirty(true)
+      return { ...prev, todos: [...prev.todos, item] }
+    })
+  }
+
+  const toggleTodo = (index: number) => {
+    setDaily((prev) => {
+      if (!prev) return prev
+      const todos = prev.todos.map((t, i) => (i === index ? { ...t, done: !t.done } : t))
+      setDirty(true)
+      return { ...prev, todos }
+    })
+  }
+
+  const changeTodoTitle = (index: number, title: string) => {
+    setDaily((prev) => {
+      if (!prev) return prev
+      const todos = prev.todos.map((t, i) => (i === index ? { ...t, title } : t))
+      setDirty(true)
+      return { ...prev, todos }
+    })
+  }
+
+  const removeTodo = (index: number) => {
+    setDaily((prev) => {
+      if (!prev) return prev
+      const todos = prev.todos.filter((_, i) => i !== index)
+      setDirty(true)
+      return { ...prev, todos }
+    })
+  }
+
+  const moveTodo = (index: number, direction: -1 | 1) => {
+    setDaily((prev) => {
+      if (!prev) return prev
+      const next = index + direction
+      if (next < 0 || next >= prev.todos.length) return prev
+      const todos = prev.todos.slice()
+      const [row] = todos.splice(index, 1)
+      todos.splice(next, 0, row)
+      setDirty(true)
+      return { ...prev, todos }
+    })
+  }
+
   const handleSave = async () => {
     if (!daily) return
     setSaving(true)
@@ -249,6 +301,16 @@ export default function DailyPage() {
               placeholder="하루를 한 문장으로 요약해 보세요."
             />
           </label>
+
+          <DailyTodoSection
+            todos={daily.todos}
+            disabled={busy}
+            onAdd={addTodo}
+            onToggle={toggleTodo}
+            onChangeTitle={changeTodoTitle}
+            onRemove={removeTodo}
+            onMove={moveTodo}
+          />
 
           <div className="logs-section">
             <div className="logs-section-head">

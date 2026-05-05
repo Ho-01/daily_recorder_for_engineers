@@ -5,7 +5,7 @@ import fsSync from 'node:fs'
 import { randomBytes } from 'node:crypto'
 import { fileURLToPath } from 'node:url'
 import { IPC_CHANNELS } from '../shared/ipc'
-import type { CategoryRecord, DailyJournalFile, LogEntry, TagRecord, TypeRecord } from '../shared/journal'
+import type { CategoryRecord, DailyJournalFile, LogEntry, TagRecord, TodoItem, TypeRecord } from '../shared/journal'
 import type { CardInsightsResult } from '../shared/cardInsights'
 import type { AggregateRangeResult, DayAggregateRow } from '../shared/visualization'
 
@@ -79,17 +79,47 @@ function emptyDaily(isoDate: string): DailyJournalFile {
     date: isoDate,
     journal: '',
     logs: [],
+    todos: [],
   }
 }
 
-function isDailyJournalFile(value: unknown): value is DailyJournalFile {
+function isTodoItem(value: unknown): value is TodoItem {
+  if (!value || typeof value !== 'object') return false
+  const t = value as Record<string, unknown>
+  return typeof t.todoId === 'string' && typeof t.title === 'string' && typeof t.done === 'boolean'
+}
+
+/** 디스크 등: `todos` 생략 허용 */
+function validateDailyJournalLoose(value: unknown): boolean {
   if (!value || typeof value !== 'object') return false
   const v = value as Record<string, unknown>
   if (typeof v.date !== 'string' || typeof v.journal !== 'string' || !Array.isArray(v.logs)) return false
   for (const log of v.logs) {
     if (!isLogEntry(log)) return false
   }
+  if (v.todos !== undefined && (!Array.isArray(v.todos) || !v.todos.every(isTodoItem))) return false
   return true
+}
+
+/** 저장: `todos` 필수·유효 */
+function validateDailyJournalForSave(value: unknown): value is DailyJournalFile {
+  if (!validateDailyJournalLoose(value)) return false
+  const v = value as Record<string, unknown>
+  return Array.isArray(v.todos) && v.todos.every(isTodoItem)
+}
+
+function normalizeDailyJournal(value: unknown, isoDate: string): DailyJournalFile | null {
+  if (!validateDailyJournalLoose(value)) return null
+  const v = value as Record<string, unknown>
+  const todosRaw = v['todos']
+  const todos =
+    Array.isArray(todosRaw) && todosRaw.every(isTodoItem) ? (todosRaw as TodoItem[]) : []
+  return {
+    date: typeof v.date === 'string' ? v.date : isoDate,
+    journal: typeof v.journal === 'string' ? v.journal : '',
+    logs: v.logs as LogEntry[],
+    todos,
+  }
 }
 
 function isLogEntry(value: unknown): value is LogEntry {
@@ -150,14 +180,15 @@ async function loadDailyFromPath(filePath: string, isoDate: string): Promise<Dai
       }
       throw e
     }
-    if (!isDailyJournalFile(parsed)) {
+    const normalized = normalizeDailyJournal(parsed, isoDate)
+    if (!normalized) {
       console.warn(`[main] loadDailyFromPath: invalid shape — ${filePath}`)
       return emptyDaily(isoDate)
     }
-    if (parsed.date !== isoDate) {
-      parsed.date = isoDate
+    if (normalized.date !== isoDate) {
+      normalized.date = isoDate
     }
-    return parsed
+    return normalized
   } catch (err: unknown) {
     const code = err && typeof err === 'object' && 'code' in err ? (err as NodeJS.ErrnoException).code : undefined
     if (code === 'ENOENT') {
@@ -380,8 +411,8 @@ function registerIpcHandlers(): void {
   })
 
   ipcMain.handle(IPC_CHANNELS.SAVE_DAILY, async (_event, payload: unknown): Promise<void> => {
-    if (!isDailyJournalFile(payload)) {
-      throw new Error('saveDaily: invalid daily file shape')
+    if (!validateDailyJournalForSave(payload)) {
+      throw new Error('saveDaily: invalid daily file shape (date, journal, logs, todos required)')
     }
     const { date } = payload
     if (!ISO_DATE.test(date)) {

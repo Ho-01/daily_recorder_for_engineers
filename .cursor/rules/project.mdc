@@ -28,16 +28,17 @@ Personal **local** desktop app: file-based daily dev growth journal under `data/
 - **Type**: fixed list in `data/types.jsonl`; **exactly one** `type` per log (string = `typeId` value).
 - **Category**: semi-fixed `data/categories.jsonl`; **multiple** `categoryIds` per log; MVP UI may **not** add/remove categories (editing JSONL by hand is ok).
 - **Tag**: user-managed `data/tags.jsonl`; **multiple** `tagIds` per log; CRUD from UI.
-- **Daily**: one file `data/daily/YYYY-MM-DD_daily.json` per date.
+- **Daily**: one file `data/daily/YYYY-MM-DD_daily.json` per date — includes `journal`, `logs`, and **`todos`** (checklist; see `docs/TODO_DESIGN.md`).
 
 ## Naming
 
 - Daily file: `YYYY-MM-DD_daily.json`
-- IDs: `cat_*`, `tag_*`; log ids `log_YYYYMMDD_###` unique **within that daily file**
+- IDs: `cat_*`, `tag_*`; log ids `log_YYYYMMDD_###`; todo ids `todo_YYYYMMDD_###` — unique **within that daily file**
 
 ## Where to read
 
 - **`docs/DATA_SCHEMA.md`** — authoritative fields and examples
+- **`docs/TODO_DESIGN.md`** — daily Todo checklist schema and UI scope
 - **`docs/DEVELOPMENT_GUIDE.md`** — IPC list, folder layout, implementation flow
 - **`docs/PROJECT_OVERVIEW.md`** — goals and scope for humans
 - **`docs/daily.md`** — original Korean design sketch (supplementary)

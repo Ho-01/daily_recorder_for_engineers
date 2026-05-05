@@ -85,7 +85,8 @@ function buildMonthLegend(heatmap: { date: string }[], cardDate: string, cardYea
 
 /**
  * 그리드 영역(App.css): brand → journal | heatmap → slack → meta → tags
- * meta = 로그 텍스트 + 유형 + 카테고리 (태그 바로 위)
+ * slack = 할 일(있을 때만), 없으면 빈 간격
+ * meta = 로그 건수 + 유형 + 카테고리 (태그 바로 위)
  */
 export default function DailySummaryCard({
   daily,
@@ -101,6 +102,9 @@ export default function DailySummaryCard({
 
   const journalText = daily.journal.trim()
   const logCount = daily.logs.length
+  const todos = daily.todos ?? []
+  const todoDoneCount = todos.filter((t) => t.done).length
+  const todoSummaryItems = todos.slice(0, 5)
 
   const heatmapCells = insights?.heatmap ?? []
   const heatmapMax = Math.max(1, ...heatmapCells.map((c) => c.logCount))
@@ -189,7 +193,33 @@ export default function DailySummaryCard({
         ) : null}
       </aside>
 
-      <div className="summary-card-gap" aria-hidden="true" />
+      {todos.length > 0 ? (
+        <section
+          className="summary-card-zone summary-card-zone--todos"
+          aria-label="할 일"
+        >
+          <div className="summary-card-todos-block">
+            <p className="summary-card-todo-head">
+              할 일 <strong>{todoDoneCount}</strong>/{todos.length} 완료
+            </p>
+            <ul className="summary-card-todo-list">
+              {todoSummaryItems.map((t) => (
+                <li
+                  key={t.todoId}
+                  className={`summary-card-todo-line${t.done ? ' summary-card-todo-line--done' : ''}`}
+                >
+                  {t.title.trim() || '제목 없음'}
+                </li>
+              ))}
+            </ul>
+            {todos.length > 5 ? (
+              <p className="summary-card-todo-more muted">외 {todos.length - 5}건</p>
+            ) : null}
+          </div>
+        </section>
+      ) : (
+        <div className="summary-card-gap" aria-hidden="true" />
+      )}
 
       <section
         className="summary-card-zone summary-card-zone--meta summary-card-meta-stack summary-card-type-category"

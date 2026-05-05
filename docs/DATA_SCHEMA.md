@@ -66,6 +66,19 @@
 | `date` | string | ISO 날짜 `YYYY-MM-DD`, 파일명과 일치 권장 |
 | `journal` | string | 그날 한 줄 요약·회고 |
 | `logs` | array | 해당 날짜의 활동 로그 목록 |
+| `todos` | array | 그날의 Todo 체크리스트(`TodoItem`). 생략 시 로더가 `[]`로 보간 |
+
+### Todo item (`todos[]`)
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| `todoId` | string | **그 일 파일 안에서만** 유일. 권장: `todo_YYYYMMDD_###` |
+| `title` | string | 항목 한 줄 제목 |
+| `done` | boolean | 완료 여부 |
+
+순서는 **배열 순서**가 기준이다.
+
+자세한 제품·UI 범위는 [TODO_DESIGN.md](./TODO_DESIGN.md)를 본다.
 
 ### Log entry
 
@@ -93,6 +106,9 @@
       "tagIds": ["tag_viper", "tag_yaml"],
       "detail": "Go Agent의 config 디렉토리 구조를 Viper 기반으로 단순화하는 방향을 정리했다."
     }
+  ],
+  "todos": [
+    { "todoId": "todo_20260504_001", "title": "설계 메모 보강", "done": false }
   ]
 }
 ```
@@ -104,3 +120,4 @@
 - 일별 파일의 `logs[].type`은 **하나**만 (types 목록과 일치).
 - `categoryIds`, `tagIds`는 배열; 빈 배열 허용 여부는 제품 정책으로 정하되, 필드 이름은 **`categories` / `tags`가 아니라 ID 배열**을 쓴다.
 - `logId`는 **해당 일 파일 내에서 유일**해야 한다.
+- `todoId`는 **해당 일 파일 내에서 유일**해야 한다.

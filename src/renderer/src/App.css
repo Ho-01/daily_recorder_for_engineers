@@ -155,6 +155,132 @@
   background: rgba(220, 80, 80, 0.12);
 }
 
+.daily-todos-section {
+  margin-top: 1.25rem;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(127, 127, 127, 0.28);
+  background: rgba(127, 127, 127, 0.04);
+}
+
+.daily-todos-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.65rem;
+}
+
+.daily-todos-title {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.daily-todos-count {
+  font-size: 0.85rem;
+}
+
+.daily-todos-add {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.daily-todos-draft {
+  flex: 1;
+  min-width: 12rem;
+}
+
+.daily-todos-empty {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.daily-todos-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.daily-todo-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.daily-todo-check-label {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+}
+
+.daily-todo-checkbox {
+  margin-top: 0.35rem;
+  flex-shrink: 0;
+}
+
+.daily-todo-title-input {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.92rem;
+}
+
+.daily-todo-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.daily-todo-move {
+  border-radius: 6px;
+  border: 1px solid rgba(127, 127, 127, 0.4);
+  padding: 0.15rem 0.45rem;
+  font-size: 0.75rem;
+  font-family: inherit;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+.daily-todo-move:hover:not(:disabled) {
+  background: rgba(127, 127, 127, 0.1);
+}
+
+.daily-todo-move:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.daily-todo-remove {
+  border-radius: 6px;
+  border: 1px solid rgba(200, 90, 90, 0.45);
+  padding: 0.15rem 0.45rem;
+  font-size: 0.75rem;
+  font-family: inherit;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.daily-todo-remove:hover:not(:disabled) {
+  background: rgba(200, 90, 90, 0.1);
+}
+
+.daily-todo-remove:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .logs-section {
   margin-top: 1.25rem;
 }
@@ -807,7 +933,7 @@
 }
 
 /**
- * 요약 카드: journal | heatmap → slack → meta(로그·유형·카테고리) → tags
+ * 요약 카드: journal | heatmap → slack(할 일 또는 빈 간격) → meta(로그·유형·카테고리) → tags
  * 영역 이름·순서는 DailySummaryCard.tsx 와 동일하게 유지할 것.
  */
 .summary-card {
@@ -879,6 +1005,20 @@
   min-height: 0;
 }
 
+.summary-card-zone--todos {
+  grid-area: slack;
+  align-self: stretch;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  contain: layout;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding-bottom: 0.15rem;
+  border-bottom: 1px solid rgba(127, 127, 127, 0.18);
+}
+
 .summary-card-zone--tags {
   grid-area: tags;
   align-self: stretch;
@@ -935,6 +1075,54 @@
 
 .summary-card-log-count-line strong {
   font-weight: 700;
+}
+
+.summary-card-todos-block {
+  margin: 0;
+  padding: 0;
+}
+
+.summary-card-todo-head {
+  margin: 0 0 0.28rem;
+  font-size: 0.74rem;
+  font-weight: 500;
+  line-height: 1.35;
+  opacity: 0.92;
+}
+
+.summary-card-todo-head strong {
+  font-weight: 700;
+}
+
+.summary-card-todo-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  max-width: 100%;
+}
+
+.summary-card-todo-line {
+  font-size: 0.68rem;
+  line-height: 1.35;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.95;
+}
+
+.summary-card-todo-line--done {
+  text-decoration: line-through;
+  opacity: 0.55;
+  font-weight: 450;
+}
+
+.summary-card-todo-more {
+  margin: 0.25rem 0 0;
+  font-size: 0.62rem;
 }
 
 .summary-card-meta-stack {

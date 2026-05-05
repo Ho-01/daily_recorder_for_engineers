@@ -3,5 +3,6 @@ export type {
   CategoryRecord,
   TagRecord,
   LogEntry,
+  TodoItem,
   DailyJournalFile,
 } from '../../../shared/journal'

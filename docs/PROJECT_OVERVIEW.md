@@ -22,6 +22,9 @@
 | **Category** | 성장 영역(Java/Spring/Infrastructure 등). 로그당 **여러 개** 가능 |
 | **Tag** | 세부 기술·주제(R2DBC, Viper 등). 로그당 **여러 개**, 사용자가 관리 |
 | **Daily** | 하루 단위 파일 하나(`YYYY-MM-DD_daily.json`)에 일일 요약(`journal`) + 로그 배열(`logs`) |
+| **Todo (일별)** | 같은 Daily 파일의 **`todos` 배열**로 그날 체크리스트 관리; 요약 카드에도 표시 가능 |
+
+일별 Todo 필드·ID 규칙·UI 방향은 [TODO_DESIGN.md](./TODO_DESIGN.md), 저장 형식은 [DATA_SCHEMA.md](./DATA_SCHEMA.md)를 본다.
 
 ## MVP 범위와 제약
 
@@ -35,4 +38,5 @@
 |------|------|
 | [DATA_SCHEMA.md](./DATA_SCHEMA.md) | 필드·파일 경로·예시 JSON |
 | [DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md) | Electron 레이어·IPC·구현 순서 |
+| [TODO_DESIGN.md](./TODO_DESIGN.md) | 일별 Todo 체크리스트·카드 표시 설계 |
 | [daily.md](./daily.md) | 초기 설계 메모(시각화 목업 등) |

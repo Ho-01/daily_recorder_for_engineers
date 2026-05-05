@@ -25,5 +25,17 @@
       ],
       "detail": "daily_recorder_for_engineers 초기 개발"
     }
+  ],
+  "todos": [
+    {
+      "todoId": "todo_20260505_001",
+      "title": "daily recorder for engineers 초기 개발",
+      "done": true
+    },
+    {
+      "todoId": "todo_20260505_002",
+      "title": "내일 할일 정리",
+      "done": false
+    }
   ]
 }
