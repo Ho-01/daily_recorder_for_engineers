@@ -2,6 +2,7 @@ import { useState } from 'react'
 import DailyPage from './pages/DailyPage'
 import TagManagePage from './pages/TagManagePage'
 import VisualizePage from './pages/VisualizePage'
+import * as journalApi from './services/journalApi'
 import './App.css'
 
 type PageId = 'daily' | 'tags' | 'visualize'
@@ -31,6 +32,14 @@ export default function App() {
             onClick={() => setPage('visualize')}
           >
             Visualize
+          </button>
+          <button
+            type="button"
+            className="app-nav-capture"
+            title="메인을 숨기고 플로팅 캡처만 표시"
+            onClick={() => void journalApi.enterQuickCaptureMode()}
+          >
+            빠른 캡처
           </button>
         </nav>
       </header>

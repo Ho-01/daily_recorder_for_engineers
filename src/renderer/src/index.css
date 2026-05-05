@@ -20,6 +20,31 @@ body {
   min-height: 100vh;
 }
 
+/* 플로팅 빠른 캡처 창(좁은 폭) */
+html.quick-capture-html,
+html.quick-capture-html body {
+  height: 100%;
+}
+
+body.quick-capture-body {
+  min-width: 0;
+  min-height: 0;
+}
+
+body.quick-capture-body #root {
+  height: 100%;
+  background: transparent;
+}
+
+/* 투명 창 — 바깥 사각형 배경 제거(원 밖은 바탕화면 비침) */
+html.quick-capture-html {
+  background-color: transparent;
+}
+
+html.quick-capture-html body {
+  background-color: transparent;
+}
+
 h1,
 h2 {
   margin: 0 0 0.5rem;

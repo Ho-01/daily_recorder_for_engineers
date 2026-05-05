@@ -610,6 +610,16 @@
 
 .visualize-tab-panel {
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/**
+ * 1:1 요약 카드 가로 — 이 값만 조정하면 카드·PNG 캡처 폭이 함께 고정된다.
+ * 내용/자식 추가와 무관하게 픽셀 상한은 유지(좁은 창만 min(값, 100%)로 축소).
+ */
+.visualize-tab-panel-card {
+  --summary-card-w: 500px;
 }
 
 .visualize-tab-panel-card .visualize-toolbar {
@@ -619,6 +629,7 @@
 .visualize-tab-panel-card .visualize-card-wrap {
   margin-top: 0;
   width: 100%;
+  min-width: 0;
   display: flex;
   justify-content: center;
   align-items: flex-start;
@@ -626,15 +637,15 @@
 }
 
 .visualize-tab-panel-card .visualize-card-capture {
-  display: inline-block;
-  line-height: 0;
-  flex: 0 0 auto;
-}
-
-.visualize-tab-panel-card .summary-card {
-  width: min(960px, 100%);
-  max-width: min(960px, 100%);
+  display: block;
+  box-sizing: border-box;
+  width: min(var(--summary-card-w), 100%);
+  max-width: 100%;
   min-width: 0;
+  flex-shrink: 0;
+  margin-inline: auto;
+  overflow-x: clip;
+  line-height: 0;
 }
 
 .visualize-png-btn {
@@ -932,6 +943,8 @@
 .visualize-card-wrap {
   display: flex;
   justify-content: center;
+  width: 100%;
+  min-width: 0;
   margin-top: 0.5rem;
 }
 
@@ -941,8 +954,9 @@
  * 영역 이름·순서는 DailySummaryCard.tsx 와 동일하게 유지할 것.
  */
 .summary-card {
-  width: min(960px, 100%);
-  max-width: min(960px, 100%);
+  /* 가로는 부모(.visualize-card-capture)가 --summary-card-w 로 고정 */
+  width: 100%;
+  max-width: 100%;
   min-width: 0;
   aspect-ratio: 1 / 1;
   box-sizing: border-box;
@@ -969,7 +983,8 @@
 .summary-card-mid {
   grid-area: mid;
   display: grid;
-  grid-template-rows: 1fr auto auto 1fr;
+  /* 위: 브랜드 바로 아래 작은 간격만 — 1fr 상단 제거해 한 줄이 위에서 시작 */
+  grid-template-rows: auto auto auto 1fr;
   grid-template-columns: minmax(0, 1fr);
   min-height: 0;
   min-width: 0;
@@ -980,6 +995,12 @@
 .summary-card-mid-spacer {
   min-height: 0;
   pointer-events: none;
+}
+
+.summary-card-mid-spacer--top {
+  height: 0.05rem;
+  min-height: 0.05rem;
+  max-height: 0.65rem;
 }
 
 .summary-card-split {
@@ -1018,7 +1039,8 @@
   display: inline-flex;
   align-items: baseline;
   gap: 0.38rem;
-  flex-shrink: 0;
+  flex-shrink: 1;
+  min-width: 0;
   max-width: 100%;
 }
 
@@ -1031,6 +1053,8 @@
   text-transform: uppercase;
   line-height: 1.35;
   opacity: 0.58;
+  overflow-wrap: anywhere;
+  word-break: normal;
 }
 
 .summary-card-brand-version {
@@ -1044,11 +1068,11 @@
 
 .summary-card-zone--journal {
   align-self: stretch;
+  width: 100%;
   min-height: 0;
   min-width: 0;
   max-height: 100%;
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: hidden;
   contain: layout;
 }
 
@@ -1064,9 +1088,10 @@
 
 .summary-card-zone--meta {
   grid-area: meta;
-  min-height: 0;
   min-width: 0;
-  overflow: visible;
+  max-width: 100%;
+  /* overflow-x만 hidden이면 y는 visible→규격상 auto로 계산되어 스크롤바가 생길 수 있음 → 통일 hidden */
+  overflow: hidden;
   contain: layout;
   padding-top: 0.4rem;
   border-top: 1px solid rgba(127, 127, 127, 0.22);
@@ -1074,6 +1099,7 @@
 
 .summary-card-zone--todos {
   align-self: stretch;
+  width: 100%;
   min-height: 0;
   min-width: 0;
   max-width: 100%;
@@ -1092,7 +1118,9 @@
 .summary-card-zone--tags {
   grid-area: tags;
   align-self: stretch;
-  min-height: 0;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
   contain: layout;
 }
 
@@ -1108,19 +1136,28 @@
 
 .summary-card-quote {
   margin: 0;
+  box-sizing: border-box;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   font-size: calc(0.78rem - 2pt);
   line-height: 1.52;
   font-weight: 450;
   color: rgba(236, 236, 244, 0.72);
-  white-space: pre-wrap;
-  overflow-wrap: break-word;
-  word-break: break-word;
+  /* pre-wrap 은 line-clamp 와 함께 쓰면 잘림이 불안정 — 줄바꿈만 유지 */
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  word-break: normal;
   border-left: none;
   border-right: none;
   border-top: none;
   border-bottom: 1px solid rgba(127, 127, 127, 0.22);
   padding: 0 0 0.4rem;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
 }
 
 .summary-card-placeholder {
@@ -1135,6 +1172,9 @@
   font-weight: 500;
   line-height: 1.35;
   opacity: 0.92;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .summary-card-log-count-line strong {
@@ -1147,6 +1187,10 @@
   font-weight: 500;
   line-height: 1.35;
   opacity: 0.92;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: normal;
 }
 
 .summary-card-todo-head strong {
@@ -1181,15 +1225,15 @@
 
 .summary-card-todo-line {
   display: block;
-  font-size: 0.68rem;
+  font-size: 0.58rem;
   line-height: 1.35;
   font-weight: 500;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: normal;
   min-width: 0;
   max-width: 100%;
-  opacity: 0.95;
+  opacity: 0.85;
 }
 
 .summary-card-todo-line--done {
@@ -1231,6 +1275,8 @@
   align-items: flex-end;
   gap: 0.28rem;
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .summary-card-streak-text {
@@ -1240,6 +1286,9 @@
   line-height: 1.35;
   opacity: 0.92;
   text-align: right;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .summary-card-streak-text strong {
@@ -1338,6 +1387,16 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.32rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.summary-card-type-chips > li,
+.summary-card-category-chips > li,
+.summary-card-tag-chips > li,
+.summary-card-footer-chip-row > li {
+  min-width: 0;
+  max-width: 100%;
 }
 
 /** types.jsonl 순서대로 전 유형 표시 — 좌→우, 줄바꿈 허용 */
@@ -1375,6 +1434,8 @@
   flex-wrap: wrap;
   gap: 0.26rem;
   justify-content: flex-start;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .summary-card-footer-tags-stack .summary-chip-footer-compact {
@@ -1401,6 +1462,8 @@
   flex-wrap: wrap;
   gap: 0.26rem;
   justify-content: flex-start;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .summary-card-muted {
@@ -1415,6 +1478,7 @@
   align-items: center;
   justify-content: center;
   gap: 0.15rem;
+  min-width: 0;
   max-width: 100%;
   font-size: 0.68rem;
   line-height: 1.4;
@@ -1422,7 +1486,7 @@
   border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.18);
   background: rgba(255, 255, 255, 0.06);
-  word-break: keep-all;
+  word-break: normal;
   overflow-wrap: anywhere;
 }
 
@@ -1457,4 +1521,212 @@
 
 .summary-card-footer-tags .summary-chip-count {
   font-size: 0.52rem;
+}
+
+.app-nav-capture {
+  margin-left: 0.35rem;
+  border-style: dashed;
+}
+
+/* —— Quick capture (floating window) —— */
+.quick-capture-root {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+/* 접힘: 투명 창 + 버튼만 채움 → 사각형 래퍼 없이 원 하나(창은 정사각, main에서 고정) */
+.quick-capture-root.quick-capture-root--collapsed {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+}
+
+/* 창 전체 = 단일 원(100% + 50% radius). margin/padding 없음 */
+.quick-capture-handle-btn {
+  -webkit-app-region: no-drag;
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1;
+  cursor: grab;
+  touch-action: none;
+  font-family: inherit;
+  background: rgb(252, 252, 253);
+  color: rgba(0, 0, 0, 0.42);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.quick-capture-handle-btn:active {
+  cursor: grabbing;
+}
+
+.quick-capture-handle-btn:hover {
+  background: rgb(255, 255, 255);
+  border-color: rgba(0, 0, 0, 0.09);
+}
+
+@media (prefers-color-scheme: dark) {
+  .quick-capture-handle-btn {
+    background: rgb(244, 244, 246);
+    border-color: rgba(255, 255, 255, 0.14);
+    color: rgba(0, 0, 0, 0.4);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  }
+
+  .quick-capture-handle-btn:hover {
+    background: rgb(250, 250, 251);
+  }
+}
+
+.quick-capture-expanded {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 0 10px 10px;
+  border-radius: 12px;
+  background: rgba(34, 34, 38, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+@media (prefers-color-scheme: light) {
+  .quick-capture-expanded {
+    background: rgba(252, 252, 254, 0.98);
+    border-color: rgba(0, 0, 0, 0.1);
+  }
+}
+
+.quick-capture-drag {
+  -webkit-app-region: drag;
+}
+
+.quick-capture-no-drag {
+  -webkit-app-region: no-drag;
+}
+
+.quick-capture-top {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 8px 4px 6px;
+  flex-shrink: 0;
+}
+
+.quick-capture-collapse-btn {
+  -webkit-app-region: no-drag;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid rgba(127, 127, 127, 0.45);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0;
+}
+
+.quick-capture-heading {
+  flex: 1;
+  font-size: 0.88rem;
+  font-weight: 600;
+  opacity: 0.92;
+}
+
+.quick-capture-date {
+  font-size: 0.72rem;
+  opacity: 0.65;
+  font-variant-numeric: tabular-nums;
+}
+
+.quick-capture-form {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-height: 0;
+}
+
+.quick-capture-label {
+  font-size: 0.72rem;
+  opacity: 0.75;
+}
+
+.quick-capture-textarea {
+  flex: 1;
+  min-height: 5.5rem;
+  resize: none;
+  border-radius: 8px;
+  border: 1px solid rgba(127, 127, 127, 0.45);
+  padding: 0.45rem 0.55rem;
+  font-size: 0.68rem;
+  font-family: inherit;
+  color: inherit;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+@media (prefers-color-scheme: light) {
+  .quick-capture-textarea {
+    background: rgba(255, 255, 255, 0.85);
+  }
+}
+
+.quick-capture-error {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #ff6b6b;
+}
+
+.quick-capture-toast {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #6be6a8;
+}
+
+.quick-capture-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.25rem;
+}
+
+.quick-capture-save,
+.quick-capture-main {
+  flex: 1;
+  min-width: 6rem;
+  border-radius: 8px;
+  padding: 0.4rem 0.65rem;
+  font-size: 0.68rem;
+  font-family: inherit;
+  cursor: pointer;
+  border: 1px solid rgba(127, 127, 127, 0.45);
+  color: inherit;
+  background: transparent;
+}
+
+.quick-capture-save {
+  border-color: rgba(100, 108, 255, 0.55);
+  background: rgba(100, 108, 255, 0.2);
+}
+
+.quick-capture-save:disabled,
+.quick-capture-main:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }

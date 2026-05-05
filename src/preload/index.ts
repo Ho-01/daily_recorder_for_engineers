@@ -44,6 +44,27 @@ const api = {
   ): Promise<{ ok: boolean; canceled?: boolean; filePath?: string }> {
     return ipcRenderer.invoke(IPC_CHANNELS.SAVE_PNG_DIALOG, { defaultFilename, bytes })
   },
+  appendLog(payload: {
+    isoDate: string
+    detail: string
+    typeId?: string
+    categoryIds?: string[]
+    tagIds?: string[]
+  }): Promise<{ ok: true; logId: string }> {
+    return ipcRenderer.invoke(IPC_CHANNELS.APPEND_LOG, payload)
+  },
+  enterQuickCaptureMode(): Promise<void> {
+    return ipcRenderer.invoke(IPC_CHANNELS.CAPTURE_ENTER_QUICK)
+  },
+  exitQuickCaptureMode(): Promise<void> {
+    return ipcRenderer.invoke(IPC_CHANNELS.CAPTURE_EXIT_QUICK)
+  },
+  setCaptureContentSize(width: number, height: number): Promise<void> {
+    return ipcRenderer.invoke(IPC_CHANNELS.CAPTURE_SET_CONTENT_SIZE, { width, height })
+  },
+  moveCaptureBy(dx: number, dy: number): Promise<void> {
+    return ipcRenderer.invoke(IPC_CHANNELS.CAPTURE_MOVE_BY, { dx, dy })
+  },
 }
 
 contextBridge.exposeInMainWorld('api', api)

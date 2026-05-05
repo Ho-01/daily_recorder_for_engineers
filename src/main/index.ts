@@ -1,10 +1,11 @@
-import { app, BrowserWindow, dialog, ipcMain } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, Menu, nativeImage, screen, Tray } from 'electron'
 import path from 'node:path'
 import fs from 'node:fs/promises'
 import fsSync from 'node:fs'
 import { randomBytes } from 'node:crypto'
 import { fileURLToPath } from 'node:url'
 import { IPC_CHANNELS } from '../shared/ipc'
+import { nextLogId } from '../shared/logId'
 import type { CategoryRecord, DailyJournalFile, LogEntry, TagRecord, TodoItem, TypeRecord } from '../shared/journal'
 import type { CardInsightsResult } from '../shared/cardInsights'
 import type { AggregateRangeResult, DayAggregateRow } from '../shared/visualization'
@@ -12,6 +13,216 @@ import type { AggregateRangeResult, DayAggregateRow } from '../shared/visualizat
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 let mainWindow: BrowserWindow | null = null
+let captureWindow: BrowserWindow | null = null
+let tray: Tray | null = null
+
+/** 렌더러가 마지막으로 요청한 캡처 창 콘텐츠 크기 — 드래그 중 OS가 창만 키우는 현상 방지 */
+let captureLastContentSize = { width: 52, height: 52 }
+
+/** 동일 날짜 파일에 대한 append 직렬화(메인·캡처 동시 저장 경합 완화) */
+let appendMutex: Promise<void> = Promise.resolve()
+
+function runAppendSerialized<T>(fn: () => Promise<T>): Promise<T> {
+  const next = appendMutex.then(() => fn())
+  appendMutex = next.then(
+    () => undefined,
+    () => undefined,
+  )
+  return next
+}
+
+function resolveTrayIcon(): ReturnType<typeof nativeImage.createEmpty> {
+  const candidates = [
+    path.join(app.getAppPath(), 'public', 'vite.svg'),
+    path.join(app.getAppPath(), 'public', 'electron-vite.svg'),
+  ]
+  for (const p of candidates) {
+    if (fsSync.existsSync(p)) {
+      const img = nativeImage.createFromPath(p)
+      if (!img.isEmpty()) return img
+    }
+  }
+  return nativeImage.createEmpty()
+}
+
+function destroyTray(): void {
+  if (tray) {
+    tray.removeAllListeners('click')
+    tray.destroy()
+    tray = null
+  }
+}
+
+/** 메인이 숨겨진 빠른 캡처 세션에서 캡처 창이 안 보일 때: 트레이로 복구 */
+function recoverOrFocusCaptureWindow(): void {
+  if (!mainWindow || mainWindow.isDestroyed()) return
+  if (mainWindow.isVisible()) {
+    if (captureWindow && !captureWindow.isDestroyed()) {
+      if (captureWindow.isMinimized()) captureWindow.restore()
+      captureWindow.show()
+      captureWindow.focus()
+    }
+    return
+  }
+
+  buildTray()
+  if (captureWindow && !captureWindow.isDestroyed()) {
+    if (captureWindow.isMinimized()) captureWindow.restore()
+    captureWindow.show()
+    captureWindow.focus()
+    const b = captureWindow.getBounds()
+    const { x, y, width, height } = screen.getDisplayMatching(b).workArea
+    const overlapX = b.x + b.width > x && b.x < x + width
+    const overlapY = b.y + b.height > y && b.y < y + height
+    if (!overlapX || !overlapY) {
+      positionCaptureBottomRight(captureWindow)
+    }
+    return
+  }
+
+  ensureCaptureWindow()
+}
+
+function buildTray(): void {
+  if (tray) return
+  const icon = resolveTrayIcon()
+  tray = new Tray(icon)
+  tray.setToolTip('Daily Recorder — 빠른 캡처 (클릭: 캡처 창 다시 보이기)')
+  const menu = Menu.buildFromTemplate([
+    {
+      label: '캡처 창 다시 보이기',
+      click: () => {
+        recoverOrFocusCaptureWindow()
+      },
+    },
+    { type: 'separator' },
+    {
+      label: '메인 창 열기',
+      click: () => {
+        exitQuickCaptureFromMain()
+      },
+    },
+    { type: 'separator' },
+    {
+      label: '종료',
+      click: () => {
+        destroyTray()
+        app.quit()
+      },
+    },
+  ])
+  tray.setContextMenu(menu)
+  if (process.platform !== 'darwin') {
+    tray.on('click', () => {
+      recoverOrFocusCaptureWindow()
+    })
+  }
+}
+
+function loadCaptureUrl(win: BrowserWindow): void {
+  if (!app.isPackaged && process.env['ELECTRON_RENDERER_URL']) {
+    const base = process.env['ELECTRON_RENDERER_URL'].replace(/\/?$/, '')
+    void win.loadURL(`${base}#/quick-capture`)
+  } else {
+    void win.loadFile(path.join(__dirname, '../renderer/index.html'), { hash: 'quick-capture' })
+  }
+}
+
+function positionCaptureBottomRight(win: BrowserWindow): void {
+  const wa = screen.getPrimaryDisplay().workArea
+  const b = win.getBounds()
+  const margin = 16
+  win.setPosition(wa.x + wa.width - b.width - margin, wa.y + wa.height - b.height - margin)
+}
+
+function ensureCaptureWindow(): void {
+  if (captureWindow && !captureWindow.isDestroyed()) {
+    if (captureWindow.isMinimized()) captureWindow.restore()
+    captureWindow.show()
+    captureWindow.focus()
+    return
+  }
+
+  const win = new BrowserWindow({
+    width: 52,
+    height: 52,
+    minWidth: 22,
+    minHeight: 22,
+    maxWidth: 520,
+    maxHeight: 720,
+    frame: false,
+    skipTaskbar: true,
+    alwaysOnTop: true,
+    /** 접힘 시 네 모서리를 투명 처리해 ‘원 하나’만 보이게 함 */
+    transparent: true,
+    backgroundColor: '#00000000',
+    /** 가장자리 드래그·화면 끝 스냅 등으로 창 크기가 바뀌면 UI가 함께 커지는 문제 방지 — 크기는 IPC만 */
+    resizable: false,
+    maximizable: false,
+    fullscreenable: false,
+    show: false,
+    webPreferences: {
+      preload: preloadScriptPath(),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: false,
+    },
+  })
+  win.setMenuBarVisibility(false)
+  win.setAlwaysOnTop(true, 'floating')
+  win.setResizable(false)
+  captureWindow = win
+
+  let captureResizeClamp = false
+  win.on('resize', () => {
+    if (captureResizeClamp || !captureWindow || captureWindow.isDestroyed()) return
+    const [cw, ch] = captureWindow.getContentSize()
+    const { width: tw, height: th } = captureLastContentSize
+    if (Math.abs(cw - tw) <= 1 && Math.abs(ch - th) <= 1) return
+    captureResizeClamp = true
+    try {
+      captureWindow.setContentSize(tw, th)
+    } finally {
+      captureResizeClamp = false
+    }
+  })
+
+  loadCaptureUrl(win)
+
+  win.once('ready-to-show', () => {
+    positionCaptureBottomRight(win)
+    win.show()
+    win.focus()
+  })
+
+  win.on('closed', () => {
+    captureWindow = null
+    destroyTray()
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.show()
+      mainWindow.focus()
+    }
+  })
+}
+
+function enterQuickCaptureFromMain(): void {
+  if (!mainWindow || mainWindow.isDestroyed()) return
+  mainWindow.hide()
+  buildTray()
+  ensureCaptureWindow()
+}
+
+function exitQuickCaptureFromMain(): void {
+  if (captureWindow && !captureWindow.isDestroyed()) {
+    captureWindow.close()
+    return
+  }
+  destroyTray()
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.show()
+    mainWindow.focus()
+  }
+}
 
 /** 개발/빌드 산출물에 따라 preload 파일명이 `.cjs` 또는 `.mjs`일 수 있음 */
 function preloadScriptPath(): string {
@@ -455,11 +666,18 @@ function registerIpcHandlers(): void {
       if (!Array.isArray(bytes) || !bytes.every((b) => typeof b === 'number')) {
         throw new Error('savePngDialog: bytes must be number[]')
       }
-      const win = mainWindow ?? BrowserWindow.getFocusedWindow()
-      const { filePath, canceled } = await dialog.showSaveDialog(win ?? undefined, {
+      const dialogOpts = {
         defaultPath: defaultFilename,
         filters: [{ name: 'PNG 이미지', extensions: ['png'] }],
-      })
+      }
+      const parent =
+        (mainWindow && !mainWindow.isDestroyed() ? mainWindow : null) ??
+        (captureWindow && !captureWindow.isDestroyed() ? captureWindow : null) ??
+        BrowserWindow.getFocusedWindow()
+      const { filePath, canceled } =
+        parent && !parent.isDestroyed()
+          ? await dialog.showSaveDialog(parent, dialogOpts)
+          : await dialog.showSaveDialog(dialogOpts)
       if (canceled || !filePath) {
         return { ok: false, canceled: true }
       }
@@ -467,6 +685,94 @@ function registerIpcHandlers(): void {
       return { ok: true, filePath }
     },
   )
+
+  ipcMain.handle(IPC_CHANNELS.APPEND_LOG, async (_event, payload: unknown): Promise<{ ok: true; logId: string }> => {
+    return runAppendSerialized(async () => {
+      if (!payload || typeof payload !== 'object') throw new Error('appendLog: invalid payload')
+      const p = payload as Record<string, unknown>
+      const isoDate = p['isoDate']
+      const detailRaw = p['detail']
+      if (typeof isoDate !== 'string' || !ISO_DATE.test(isoDate)) {
+        throw new Error('appendLog: isoDate (YYYY-MM-DD)')
+      }
+      const detail = typeof detailRaw === 'string' ? detailRaw.trim() : ''
+      if (!detail) throw new Error('appendLog: detail is required')
+
+      const types = await readJsonl<TypeRecord>('types.jsonl')
+      let typeId: string | undefined
+      const tid = p['typeId']
+      if (typeof tid === 'string' && tid.length > 0 && types.some((t) => t.typeId === tid)) {
+        typeId = tid
+      }
+      if (!typeId) typeId = types[0]?.typeId
+      if (!typeId) throw new Error('appendLog: types.jsonl is empty')
+
+      let categoryIds: string[] = []
+      const cIds = p['categoryIds']
+      if (Array.isArray(cIds) && cIds.every((x) => typeof x === 'string')) {
+        categoryIds = cIds as string[]
+      }
+
+      let tagIds: string[] = []
+      const tIds = p['tagIds']
+      if (Array.isArray(tIds) && tIds.every((x) => typeof x === 'string')) {
+        tagIds = tIds as string[]
+      }
+
+      const filePath = dailyFilePath(isoDate)
+      const daily = await loadDailyFromPath(filePath, isoDate)
+      const log: LogEntry = {
+        logId: nextLogId(isoDate, daily.logs),
+        type: typeId,
+        categoryIds,
+        tagIds,
+        detail,
+      }
+      daily.logs.push(log)
+      await writeDailyFileAtomic(daily, filePath)
+      return { ok: true, logId: log.logId }
+    })
+  })
+
+  ipcMain.handle(IPC_CHANNELS.CAPTURE_ENTER_QUICK, () => {
+    enterQuickCaptureFromMain()
+  })
+
+  ipcMain.handle(IPC_CHANNELS.CAPTURE_EXIT_QUICK, () => {
+    exitQuickCaptureFromMain()
+  })
+
+  ipcMain.handle(IPC_CHANNELS.CAPTURE_SET_CONTENT_SIZE, (_event, payload: unknown) => {
+    if (!captureWindow || captureWindow.isDestroyed()) return
+    if (!payload || typeof payload !== 'object') return
+    const p = payload as Record<string, unknown>
+    const w = p['width']
+    const h = p['height']
+    if (typeof w !== 'number' || typeof h !== 'number') return
+    const width = Math.max(22, Math.min(520, Math.round(w)))
+    const height = Math.max(22, Math.min(720, Math.round(h)))
+    captureLastContentSize = { width, height }
+    const b = captureWindow.getBounds()
+    const right = b.x + b.width
+    const bottom = b.y + b.height
+    captureWindow.setContentSize(width, height)
+    const nb = captureWindow.getBounds()
+    captureWindow.setPosition(right - nb.width, bottom - nb.height)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.CAPTURE_MOVE_BY, (_event, payload: unknown) => {
+    if (!captureWindow || captureWindow.isDestroyed()) return
+    if (!payload || typeof payload !== 'object') return
+    const p = payload as Record<string, unknown>
+    const dx = p['dx']
+    const dy = p['dy']
+    if (typeof dx !== 'number' || typeof dy !== 'number') return
+    if (dx === 0 && dy === 0) return
+    const b = captureWindow.getBounds()
+    captureWindow.setPosition(Math.round(b.x + dx), Math.round(b.y + dy))
+    const { width, height } = captureLastContentSize
+    captureWindow.setContentSize(width, height)
+  })
 }
 
 function createWindow(): void {
@@ -494,6 +800,7 @@ function createWindow(): void {
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
+    if (tray) return
     app.quit()
     mainWindow = null
   }

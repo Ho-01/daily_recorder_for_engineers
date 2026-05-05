@@ -16,6 +16,10 @@ const API_METHODS = [
   'aggregateRange',
   'cardInsights',
   'savePngDialog',
+  'appendLog',
+  'enterQuickCaptureMode',
+  'exitQuickCaptureMode',
+  'setCaptureContentSize',
 ] as const
 
 function getApi() {
@@ -84,4 +88,30 @@ export async function savePngDialog(
   bytes: number[],
 ): Promise<{ ok: boolean; canceled?: boolean; filePath?: string }> {
   return getApi().savePngDialog(defaultFilename, bytes)
+}
+
+export async function appendLog(payload: {
+  isoDate: string
+  detail: string
+  typeId?: string
+  categoryIds?: string[]
+  tagIds?: string[]
+}): Promise<{ ok: true; logId: string }> {
+  return getApi().appendLog(payload)
+}
+
+export async function enterQuickCaptureMode(): Promise<void> {
+  return getApi().enterQuickCaptureMode()
+}
+
+export async function exitQuickCaptureMode(): Promise<void> {
+  return getApi().exitQuickCaptureMode()
+}
+
+export async function setCaptureContentSize(width: number, height: number): Promise<void> {
+  return getApi().setCaptureContentSize(width, height)
+}
+
+export async function moveCaptureBy(dx: number, dy: number): Promise<void> {
+  return getApi().moveCaptureBy(dx, dy)
 }

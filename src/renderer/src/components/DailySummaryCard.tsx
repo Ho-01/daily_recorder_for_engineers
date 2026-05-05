@@ -157,7 +157,10 @@ export default function DailySummaryCard({
 
       <div className="summary-card-mid">
         <div className="summary-card-mid-spacer summary-card-mid-spacer--top" aria-hidden="true" />
-        <blockquote className="summary-card-zone summary-card-zone--journal summary-card-quote">
+        <blockquote
+          className="summary-card-zone summary-card-zone--journal summary-card-quote"
+          title={journalText ? journalText : undefined}
+        >
           {journalText ? (
             journalText
           ) : (

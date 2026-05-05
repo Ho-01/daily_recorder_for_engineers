@@ -25,6 +25,17 @@ interface JournalApi {
     defaultFilename: string,
     bytes: number[],
   ): Promise<{ ok: boolean; canceled?: boolean; filePath?: string }>
+  appendLog(payload: {
+    isoDate: string
+    detail: string
+    typeId?: string
+    categoryIds?: string[]
+    tagIds?: string[]
+  }): Promise<{ ok: true; logId: string }>
+  enterQuickCaptureMode(): Promise<void>
+  exitQuickCaptureMode(): Promise<void>
+  setCaptureContentSize(width: number, height: number): Promise<void>
+  moveCaptureBy(dx: number, dy: number): Promise<void>
 }
 
 interface Window {

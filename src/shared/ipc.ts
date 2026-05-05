@@ -12,4 +12,9 @@ export const IPC_CHANNELS = {
   AGGREGATE_RANGE: 'journal:aggregateRange',
   CARD_INSIGHTS: 'journal:cardInsights',
   SAVE_PNG_DIALOG: 'journal:savePngDialog',
+  APPEND_LOG: 'journal:appendLog',
+  CAPTURE_ENTER_QUICK: 'capture:enterQuick',
+  CAPTURE_EXIT_QUICK: 'capture:exitQuick',
+  CAPTURE_SET_CONTENT_SIZE: 'capture:setContentSize',
+  CAPTURE_MOVE_BY: 'capture:moveBy',
 } as const

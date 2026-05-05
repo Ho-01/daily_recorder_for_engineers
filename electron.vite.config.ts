@@ -28,5 +28,8 @@ export default defineConfig({
     },
     plugins: [react()],
     publicDir: resolve(__dirname, 'public'),
+    server: {
+      port: 7777,
+    },
   },
 })

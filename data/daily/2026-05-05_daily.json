@@ -24,6 +24,13 @@
         "tag_52b4e39b3505"
       ],
       "detail": "daily_recorder_for_engineers 초기 개발"
+    },
+    {
+      "logId": "log_20260505_003",
+      "type": "learning",
+      "categoryIds": [],
+      "tagIds": [],
+      "detail": "테스트"
     }
   ],
   "todos": [
