@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { CardInsightsResult } from '../../../shared/cardInsights'
 import type { CategoryRecord, DailyJournalFile, LogEntry, TagRecord, TypeRecord } from '../types/journal'
 import { formatDateLongKo } from '../utils/date'
@@ -84,9 +84,7 @@ function buildMonthLegend(heatmap: { date: string }[], cardDate: string, cardYea
 }
 
 /**
- * 그리드 영역(App.css): brand → journal | heatmap → slack → meta → tags
- * slack = 할 일(있을 때만), 없으면 빈 간격
- * meta = 로그 건수 + 유형 + 카테고리 (태그 바로 위)
+ * 그리드 영역(App.css): brand → journal(전체 너비) → todos | heatmap → meta → tags
  */
 export default function DailySummaryCard({
   daily,
@@ -102,9 +100,36 @@ export default function DailySummaryCard({
 
   const journalText = daily.journal.trim()
   const logCount = daily.logs.length
-  const todos = daily.todos ?? []
+  const todos = useMemo(() => daily.todos ?? [], [daily])
   const todoDoneCount = todos.filter((t) => t.done).length
-  const todoSummaryItems = todos.slice(0, 5)
+
+  const todoListWrapRef = useRef<HTMLDivElement>(null)
+  const todoListRef = useRef<HTMLUListElement>(null)
+  const [todoListClipped, setTodoListClipped] = useState(false)
+
+  const measureTodoClip = useCallback(() => {
+    const wrap = todoListWrapRef.current
+    const list = todoListRef.current
+    const n = daily.todos?.length ?? 0
+    if (!wrap || !list || n === 0) {
+      setTodoListClipped(false)
+      return
+    }
+    setTodoListClipped(list.scrollHeight > wrap.clientHeight + 0.5)
+  }, [daily])
+
+  useLayoutEffect(() => {
+    measureTodoClip()
+    const wrap = todoListWrapRef.current
+    if (!wrap || (daily.todos?.length ?? 0) === 0) return
+    const ro = new ResizeObserver(() => {
+      measureTodoClip()
+    })
+    ro.observe(wrap)
+    return () => {
+      ro.disconnect()
+    }
+  }, [daily, measureTodoClip])
 
   const heatmapCells = insights?.heatmap ?? []
   const heatmapMax = Math.max(1, ...heatmapCells.map((c) => c.logCount))
@@ -130,6 +155,35 @@ export default function DailySummaryCard({
           <span className="summary-card-placeholder">그날 한 줄 요약이 비어 있습니다.</span>
         )}
       </blockquote>
+
+      <section className="summary-card-zone summary-card-zone--todos" aria-label="할 일">
+        {todos.length > 0 ? (
+          <>
+            <p className="summary-card-todo-head">
+              할 일 <strong>{todoDoneCount}</strong>/{todos.length} 완료
+            </p>
+            <div ref={todoListWrapRef} className="summary-card-todo-list-wrap">
+              <ul ref={todoListRef} className="summary-card-todo-list">
+                {todos.map((t) => (
+                  <li
+                    key={t.todoId}
+                    className={`summary-card-todo-line${t.done ? ' summary-card-todo-line--done' : ''}`}
+                  >
+                    {t.title.trim() || '제목 없음'}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            {todoListClipped ? (
+              <p className="summary-card-todo-overflow-hint" title="아래에 더 있음">
+                ……
+              </p>
+            ) : null}
+          </>
+        ) : (
+          <p className="summary-card-muted summary-card-todo-empty">할 일 없음</p>
+        )}
+      </section>
 
       <aside className="summary-card-zone summary-card-zone--heatmap" aria-label="연속 일수와 최근 활동 히트맵">
         <div className="summary-card-heatmap-head">
@@ -192,34 +246,6 @@ export default function DailySummaryCard({
           <p className="summary-card-muted summary-card-insights-msg">히트맵을 불러오지 못했습니다.</p>
         ) : null}
       </aside>
-
-      {todos.length > 0 ? (
-        <section
-          className="summary-card-zone summary-card-zone--todos"
-          aria-label="할 일"
-        >
-          <div className="summary-card-todos-block">
-            <p className="summary-card-todo-head">
-              할 일 <strong>{todoDoneCount}</strong>/{todos.length} 완료
-            </p>
-            <ul className="summary-card-todo-list">
-              {todoSummaryItems.map((t) => (
-                <li
-                  key={t.todoId}
-                  className={`summary-card-todo-line${t.done ? ' summary-card-todo-line--done' : ''}`}
-                >
-                  {t.title.trim() || '제목 없음'}
-                </li>
-              ))}
-            </ul>
-            {todos.length > 5 ? (
-              <p className="summary-card-todo-more muted">외 {todos.length - 5}건</p>
-            ) : null}
-          </div>
-        </section>
-      ) : (
-        <div className="summary-card-gap" aria-hidden="true" />
-      )}
 
       <section
         className="summary-card-zone summary-card-zone--meta summary-card-meta-stack summary-card-type-category"
