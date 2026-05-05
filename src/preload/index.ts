@@ -1,20 +1,35 @@
 import { ipcRenderer, contextBridge } from 'electron'
+import { IPC_CHANNELS } from '../shared/ipc'
+import type { CategoryRecord, DailyJournalFile, TagRecord, TypeRecord } from '../shared/journal'
 
-contextBridge.exposeInMainWorld('ipcRenderer', {
-  on(...args: Parameters<typeof ipcRenderer.on>) {
-    const [channel, listener] = args
-    return ipcRenderer.on(channel, (event, ...args) => listener(event, ...args))
+const api = {
+  readTypes(): Promise<TypeRecord[]> {
+    return ipcRenderer.invoke(IPC_CHANNELS.READ_TYPES)
   },
-  off(...args: Parameters<typeof ipcRenderer.off>) {
-    const [channel, ...omit] = args
-    return ipcRenderer.off(channel, ...omit)
+  readCategories(): Promise<CategoryRecord[]> {
+    return ipcRenderer.invoke(IPC_CHANNELS.READ_CATEGORIES)
   },
-  send(...args: Parameters<typeof ipcRenderer.send>) {
-    const [channel, ...omit] = args
-    return ipcRenderer.send(channel, ...omit)
+  readTags(): Promise<TagRecord[]> {
+    return ipcRenderer.invoke(IPC_CHANNELS.READ_TAGS)
   },
-  invoke(...args: Parameters<typeof ipcRenderer.invoke>) {
-    const [channel, ...omit] = args
-    return ipcRenderer.invoke(channel, ...omit)
+  createTag(name: string): Promise<TagRecord> {
+    return ipcRenderer.invoke(IPC_CHANNELS.CREATE_TAG, { name })
   },
-})
+  updateTag(tagId: string, name: string): Promise<TagRecord> {
+    return ipcRenderer.invoke(IPC_CHANNELS.UPDATE_TAG, { tagId, name })
+  },
+  countTagUsage(tagId: string): Promise<number> {
+    return ipcRenderer.invoke(IPC_CHANNELS.COUNT_TAG_USAGE, tagId)
+  },
+  deleteTag(tagId: string, skipDailyIsoDate?: string): Promise<void> {
+    return ipcRenderer.invoke(IPC_CHANNELS.DELETE_TAG, { tagId, skipDailyIsoDate })
+  },
+  readDaily(isoDate: string): Promise<DailyJournalFile> {
+    return ipcRenderer.invoke(IPC_CHANNELS.READ_DAILY, isoDate)
+  },
+  saveDaily(file: DailyJournalFile): Promise<void> {
+    return ipcRenderer.invoke(IPC_CHANNELS.SAVE_DAILY, file)
+  },
+}
+
+contextBridge.exposeInMainWorld('api', api)

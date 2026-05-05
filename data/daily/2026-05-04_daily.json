@@ -1,0 +1,15 @@
+{
+  "date": "2026-05-04",
+  "journal": "",
+  "logs": [
+    {
+      "logId": "log_20260504_001",
+      "type": "learning",
+      "categoryIds": [
+        "cat_infrastructure"
+      ],
+      "tagIds": [],
+      "detail": "Dockerfile\n- docker에서 사용하는 DSL\n- 이 dockerfile 을 읽어서 이미지를 생성 > 이미지를 컨테이너화\n- 컨테이너들은 (리눅스인경우) 윈도우 WSL 커널을 공유함"
+    }
+  ]
+}
