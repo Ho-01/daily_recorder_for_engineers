@@ -1,6 +1,6 @@
 {
   "date": "2026-05-05",
-  "journal": "",
+  "journal": "쉬어가는 하루\n- 뭐든 마음먹기 달렸다\n- 내걸 만드는건 역시 즐겁다",
   "logs": [
     {
       "logId": "log_20260505_001",
@@ -29,37 +29,12 @@
   "todos": [
     {
       "todoId": "todo_20260505_001",
-      "title": "daily recorder for engineers 초기 개발",
+      "title": "daily recorder for engineers 초기개발",
       "done": true
     },
     {
       "todoId": "todo_20260505_002",
       "title": "내일 할일 정리",
-      "done": false
-    },
-    {
-      "todoId": "todo_20260505_003",
-      "title": "a",
-      "done": false
-    },
-    {
-      "todoId": "todo_20260505_004",
-      "title": "b",
-      "done": false
-    },
-    {
-      "todoId": "todo_20260505_005",
-      "title": "c",
-      "done": false
-    },
-    {
-      "todoId": "todo_20260505_006",
-      "title": "d",
-      "done": false
-    },
-    {
-      "todoId": "todo_20260505_007",
-      "title": "e",
       "done": false
     },
     {

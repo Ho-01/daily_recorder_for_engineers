@@ -39,4 +39,5 @@
 | [DATA_SCHEMA.md](./DATA_SCHEMA.md) | 필드·파일 경로·예시 JSON |
 | [DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md) | Electron 레이어·IPC·구현 순서 |
 | [TODO_DESIGN.md](./TODO_DESIGN.md) | 일별 Todo 체크리스트·카드 표시 설계 |
+| [QUICK_CAPTURE_DESIGN.md](./QUICK_CAPTURE_DESIGN.md) | 빠른 캡처(인박스) 모드·창·IPC 설계 |
 | [daily.md](./daily.md) | 초기 설계 메모(시각화 목업 등) |

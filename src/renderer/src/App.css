@@ -120,6 +120,8 @@
 .journal-body {
   min-height: 4.5rem;
   resize: vertical;
+  font-size: 0.7rem;
+  line-height: 1.55;
 }
 
 .btn-primary {
@@ -631,7 +633,8 @@
 
 .visualize-tab-panel-card .summary-card {
   width: min(960px, 100%);
-  max-width: 960px;
+  max-width: min(960px, 100%);
+  min-width: 0;
 }
 
 .visualize-png-btn {
@@ -933,26 +936,27 @@
 }
 
 /**
- * 요약 카드: brand → journal(전체) → todos | heatmap → meta → tags
+ * 요약 카드: brand → mid → meta(건수·유형) → footer(카테고리 행 + 태그 행)
+ * 구분선: brand·journal·meta 상하단 — 푸터·할 일|히트맵 세로선과 동일 rgba(127,127,127,.22)
  * 영역 이름·순서는 DailySummaryCard.tsx 와 동일하게 유지할 것.
  */
 .summary-card {
   width: min(960px, 100%);
-  max-width: 960px;
+  max-width: min(960px, 100%);
+  min-width: 0;
   aspect-ratio: 1 / 1;
   box-sizing: border-box;
   padding: 1.35rem 1.45rem 1.2rem;
   border-radius: 18px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
   grid-template-areas:
-    'brand brand'
-    'journal journal'
-    'todos heatmap'
-    'meta meta'
-    'tags tags';
-  gap: 0.55rem 0.75rem;
+    'brand'
+    'mid'
+    'meta'
+    'tags';
+  gap: 0.55rem 0;
   align-content: start;
   min-height: 0;
   color: #ececf4;
@@ -962,28 +966,93 @@
   overflow: hidden;
 }
 
+.summary-card-mid {
+  grid-area: mid;
+  display: grid;
+  grid-template-rows: 1fr auto auto 1fr;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 0;
+  min-width: 0;
+  align-items: stretch;
+  row-gap: 0.35rem;
+}
+
+.summary-card-mid-spacer {
+  min-height: 0;
+  pointer-events: none;
+}
+
+.summary-card-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: stretch;
+  min-height: 0;
+  min-width: 0;
+}
+
+.summary-card-split > * {
+  min-width: 0;
+}
+
 .summary-card-zone--brand {
   grid-area: brand;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 0.28rem;
+  align-items: stretch;
+  gap: 0;
   min-height: 0;
-  padding-bottom: 0.15rem;
+  padding-bottom: 0.38rem;
+  border-bottom: 1px solid rgba(127, 127, 127, 0.22);
+}
+
+.summary-card-brand-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.65rem;
+  width: 100%;
+}
+
+.summary-card-brand-product {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.38rem;
+  flex-shrink: 0;
+  max-width: 100%;
+}
+
+.summary-card-brand-title {
+  display: block;
+  margin: 0;
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1.35;
+  opacity: 0.58;
+}
+
+.summary-card-brand-version {
+  flex-shrink: 0;
+  font-size: 0.48rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  line-height: 1.3;
+  opacity: 0.42;
 }
 
 .summary-card-zone--journal {
-  grid-area: journal;
-  align-self: start;
+  align-self: stretch;
   min-height: 0;
   min-width: 0;
+  max-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
   contain: layout;
 }
 
 .summary-card-zone--heatmap {
-  grid-area: heatmap;
-  align-self: stretch;
-  justify-self: stretch;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -999,14 +1068,17 @@
   min-width: 0;
   overflow: visible;
   contain: layout;
+  padding-top: 0.4rem;
+  border-top: 1px solid rgba(127, 127, 127, 0.22);
 }
 
 .summary-card-zone--todos {
-  grid-area: todos;
   align-self: stretch;
   min-height: 0;
   min-width: 0;
+  max-width: 100%;
   overflow: hidden;
+  overflow-x: hidden;
   contain: layout;
   display: flex;
   flex-direction: column;
@@ -1014,7 +1086,7 @@
   gap: 0.28rem;
   padding-right: 0.45rem;
   margin-right: 0.1rem;
-  border-right: 1px solid rgba(127, 127, 127, 0.2);
+  border-right: 1px solid rgba(127, 127, 127, 0.22);
 }
 
 .summary-card-zone--tags {
@@ -1024,37 +1096,31 @@
   contain: layout;
 }
 
-.summary-card-kicker {
-  display: block;
-  margin: 0;
-  font-size: 0.65rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  opacity: 0.7;
-  line-height: 1.45;
-}
-
 .summary-card-date {
   margin: 0;
-  font-size: 0.8rem;
+  font-size: 0.98rem;
   font-weight: 600;
   opacity: 0.9;
-  flex-shrink: 0;
-  line-height: 1.45;
+  flex: 1;
+  min-width: 0;
+  line-height: 1.22;
 }
 
 .summary-card-quote {
   margin: 0;
   width: 100%;
-  font-size: 1rem;
-  line-height: 1.55;
-  font-weight: 500;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 8;
-  overflow: hidden;
-  border: none;
-  padding: 0;
+  font-size: calc(0.78rem - 2pt);
+  line-height: 1.52;
+  font-weight: 450;
+  color: rgba(236, 236, 244, 0.72);
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  border-bottom: 1px solid rgba(127, 127, 127, 0.22);
+  padding: 0 0 0.4rem;
 }
 
 .summary-card-placeholder {
@@ -1090,8 +1156,11 @@
 .summary-card-todo-list-wrap {
   flex: 1;
   min-height: 0;
+  min-width: 0;
   overflow: hidden;
+  overflow-x: hidden;
   width: 100%;
+  max-width: 100%;
 }
 
 .summary-card-todo-list {
@@ -1101,16 +1170,25 @@
   display: flex;
   flex-direction: column;
   gap: 0.12rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.summary-card-todo-list > li {
+  min-width: 0;
   max-width: 100%;
 }
 
 .summary-card-todo-line {
+  display: block;
   font-size: 0.68rem;
   line-height: 1.35;
   font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
+  max-width: 100%;
   opacity: 0.95;
 }
 
@@ -1280,6 +1358,34 @@
 .summary-card-footer-tags {
   padding-top: 0.4rem;
   border-top: 1px solid rgba(127, 127, 127, 0.22);
+}
+
+.summary-card-footer-tags-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.42rem;
+  align-items: stretch;
+}
+
+.summary-card-footer-tags-stack .summary-card-footer-chip-row {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.26rem;
+  justify-content: flex-start;
+}
+
+.summary-card-footer-tags-stack .summary-chip-footer-compact {
+  font-size: 0.58rem;
+  line-height: 1.3;
+  padding: 0.16rem 0.34rem;
+  border-radius: 5px;
+}
+
+.summary-card-footer-tags-stack .summary-chip-footer-compact .summary-chip-count {
+  font-size: 0.52rem;
 }
 
 .summary-card-footer-tags--empty {

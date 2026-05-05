@@ -84,7 +84,7 @@ function buildMonthLegend(heatmap: { date: string }[], cardDate: string, cardYea
 }
 
 /**
- * 그리드 영역(App.css): brand → journal(전체 너비) → todos | heatmap → meta → tags
+ * 그리드 영역(App.css): brand → mid(스페이서·한 줄·할 일|히트맵·스페이서) → meta → tags
  */
 export default function DailySummaryCard({
   daily,
@@ -144,23 +144,32 @@ export default function DailySummaryCard({
   return (
     <article className="summary-card" aria-label="일별 요약 카드">
       <header className="summary-card-zone summary-card-zone--brand">
-        <span className="summary-card-kicker">Growth journal</span>
-        <p className="summary-card-date">{formatDateLongKo(daily.date)}</p>
+        <div className="summary-card-brand-row">
+          <p className="summary-card-date">{formatDateLongKo(daily.date)}</p>
+          <div className="summary-card-brand-product">
+            <span className="summary-card-brand-title">Daily Recorder for Engineers</span>
+            <span className="summary-card-brand-version" aria-label={`앱 버전 ${import.meta.env.VITE_APP_VERSION}`}>
+              v{import.meta.env.VITE_APP_VERSION}
+            </span>
+          </div>
+        </div>
       </header>
 
-      <blockquote className="summary-card-zone summary-card-zone--journal summary-card-quote">
-        {journalText ? (
-          journalText
-        ) : (
-          <span className="summary-card-placeholder">그날 한 줄 요약이 비어 있습니다.</span>
-        )}
-      </blockquote>
-
+      <div className="summary-card-mid">
+        <div className="summary-card-mid-spacer summary-card-mid-spacer--top" aria-hidden="true" />
+        <blockquote className="summary-card-zone summary-card-zone--journal summary-card-quote">
+          {journalText ? (
+            journalText
+          ) : (
+            <span className="summary-card-placeholder">오늘의 한 줄 요약이 비어 있습니다.</span>
+          )}
+        </blockquote>
+        <div className="summary-card-split">
       <section className="summary-card-zone summary-card-zone--todos" aria-label="할 일">
         {todos.length > 0 ? (
           <>
             <p className="summary-card-todo-head">
-              할 일 <strong>{todoDoneCount}</strong>/{todos.length} 완료
+              할 일 목록 :  <strong>{todoDoneCount}</strong>/{todos.length} 완료
             </p>
             <div ref={todoListWrapRef} className="summary-card-todo-list-wrap">
               <ul ref={todoListRef} className="summary-card-todo-list">
@@ -246,13 +255,16 @@ export default function DailySummaryCard({
           <p className="summary-card-muted summary-card-insights-msg">히트맵을 불러오지 못했습니다.</p>
         ) : null}
       </aside>
+        </div>
+        <div className="summary-card-mid-spacer summary-card-mid-spacer--bottom" aria-hidden="true" />
+      </div>
 
       <section
         className="summary-card-zone summary-card-zone--meta summary-card-meta-stack summary-card-type-category"
-        aria-label="로그·유형·카테고리"
+        aria-label="활동 로그·유형"
       >
         <p className="summary-card-log-count-line">
-          로그 <strong>{logCount}</strong>건
+          오늘의 활동 :  <strong>{logCount}</strong>건
         </p>
 
         {types.length > 0 ? (
@@ -279,24 +291,24 @@ export default function DailySummaryCard({
         {logCount === 0 ? (
           <p className="summary-card-muted">이 날짜에는 활동 로그가 없습니다.</p>
         ) : null}
+      </section>
 
+      <footer
+        className={`summary-card-zone summary-card-zone--tags summary-card-footer-tags summary-card-footer-tags-stack${categoryTop.length === 0 && tagTop.length === 0 ? ' summary-card-footer-tags--empty' : ''}`}
+        aria-label="카테고리와 태그"
+      >
         {categoryTop.length > 0 ? (
-          <ul className="summary-card-category-chips" aria-label="카테고리">
+          <ul className="summary-card-category-chips summary-card-footer-chip-row" aria-label="카테고리">
             {categoryTop.map(({ categoryId, n }) => (
-              <li key={categoryId} className="summary-chip summary-chip-category">
+              <li key={categoryId} className="summary-chip summary-chip-category summary-chip-footer-compact">
                 {categoryLabel(categories, categoryId)}
                 {n > 1 ? <span className="summary-chip-count">{n}</span> : null}
               </li>
             ))}
           </ul>
         ) : null}
-      </section>
-
-      <footer
-        className={`summary-card-zone summary-card-zone--tags summary-card-footer-tags${tagTop.length === 0 ? ' summary-card-footer-tags--empty' : ''}`}
-      >
         {tagTop.length > 0 ? (
-          <ul className="summary-card-tag-chips" aria-label="태그">
+          <ul className="summary-card-tag-chips summary-card-footer-chip-row" aria-label="태그">
             {tagTop.map(({ tagId, n }) => (
               <li key={tagId} className="summary-chip summary-chip-tag summary-chip-tag-compact">
                 {tagLabel(tags, tagId)}

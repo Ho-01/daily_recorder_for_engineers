@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import DailyTodoSection from '../components/DailyTodoSection'
 import LogEntryCard from '../components/LogEntryCard'
 import * as journalApi from '../services/journalApi'
@@ -9,6 +9,8 @@ import { nextTodoId } from '../utils/todoId'
 
 type LogSortMode = 'originalDesc' | 'original' | 'typeAsc' | 'typeDesc' | 'detailAsc' | 'detailDesc'
 
+const AUTO_SAVE_DELAY_MS = 700
+
 export default function DailyPage() {
   const [selectedDate, setSelectedDate] = useState(() => todayIso())
   const [daily, setDaily] = useState<DailyJournalFile | null>(null)
@@ -17,9 +19,17 @@ export default function DailyPage() {
   const [tags, setTags] = useState<TagRecord[]>([])
   const [loadingMeta, setLoadingMeta] = useState(true)
   const [loadingDaily, setLoadingDaily] = useState(true)
+  const busy = loadingMeta || loadingDaily
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [dirty, setDirty] = useState(false)
+
+  const dailyRef = useRef<DailyJournalFile | null>(null)
+  const dirtyRef = useRef(false)
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  dailyRef.current = daily
+  dirtyRef.current = dirty
 
   const [logSearch, setLogSearch] = useState('')
   const [filterTypeId, setFilterTypeId] = useState<string>('')
@@ -121,13 +131,56 @@ export default function DailyPage() {
     return rows
   }, [daily, filterTagId, filterTypeId, logSearch, sortMode, typeLabel])
 
-  const handleDateChange = (next: string) => {
-    if (dirty) {
-      const ok = window.confirm('저장하지 않은 변경이 있습니다. 날짜를 바꿀까요?')
+  const persistDaily = useCallback(async (file: DailyJournalFile): Promise<boolean> => {
+    setSaving(true)
+    setError(null)
+    try {
+      await journalApi.saveDaily(file)
+      const latest = dailyRef.current
+      if (latest && JSON.stringify(latest) === JSON.stringify(file)) {
+        setDirty(false)
+      }
+      return true
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+      return false
+    } finally {
+      setSaving(false)
+    }
+  }, [])
+
+  const clearAutoSaveTimer = useCallback(() => {
+    if (autoSaveTimerRef.current !== null) {
+      clearTimeout(autoSaveTimerRef.current)
+      autoSaveTimerRef.current = null
+    }
+  }, [])
+
+  const handleDateChange = async (next: string) => {
+    if (next === selectedDate || busy || saving) return
+    clearAutoSaveTimer()
+    if (dirtyRef.current && dailyRef.current) {
+      const ok = await persistDaily(dailyRef.current)
       if (!ok) return
     }
     setSelectedDate(next)
   }
+
+  useEffect(() => {
+    if (!dirty || !daily || busy) return
+
+    clearAutoSaveTimer()
+    autoSaveTimerRef.current = window.setTimeout(() => {
+      autoSaveTimerRef.current = null
+      const payload = dailyRef.current
+      if (!payload || !dirtyRef.current) return
+      void persistDaily(payload)
+    }, AUTO_SAVE_DELAY_MS)
+
+    return () => {
+      clearAutoSaveTimer()
+    }
+  }, [busy, clearAutoSaveTimer, daily, dirty, persistDaily])
 
   const updateJournalText = (journal: string) => {
     setDaily((prev) => (prev ? { ...prev, journal } : prev))
@@ -238,22 +291,6 @@ export default function DailyPage() {
     })
   }
 
-  const handleSave = async () => {
-    if (!daily) return
-    setSaving(true)
-    setError(null)
-    try {
-      await journalApi.saveDaily(daily)
-      setDirty(false)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const busy = loadingMeta || loadingDaily
-
   return (
     <section className="page daily-page">
       <header className="daily-header">
@@ -265,13 +302,10 @@ export default function DailyPage() {
               type="date"
               className="field-control"
               value={selectedDate}
-              onChange={(e) => handleDateChange(e.target.value)}
-              disabled={busy}
+              onChange={(e) => void handleDateChange(e.target.value)}
+              disabled={busy || saving}
             />
           </label>
-          <button type="button" className="btn-primary" onClick={() => void handleSave()} disabled={busy || saving || !daily}>
-            {saving ? '저장 중…' : '저장'}
-          </button>
         </div>
       </header>
 
@@ -292,7 +326,7 @@ export default function DailyPage() {
       {!busy && daily ? (
         <>
           <label className="field">
-            <span className="field-label">그날 한 줄</span>
+            <span className="field-label">오늘의 한 줄</span>
             <textarea
               className="field-control journal-body"
               rows={3}
@@ -413,7 +447,11 @@ export default function DailyPage() {
         </>
       ) : null}
 
-      {dirty ? <p className="muted footnote">저장되지 않은 변경이 있습니다.</p> : null}
+      {!busy && daily && (dirty || saving) ? (
+        <p className="muted footnote" aria-live="polite">
+          {saving ? '저장 중…' : '자동 저장 예정…'}
+        </p>
+      ) : null}
     </section>
   )
 }
