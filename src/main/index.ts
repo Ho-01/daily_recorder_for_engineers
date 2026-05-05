@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain } from 'electron'
 import path from 'node:path'
 import fs from 'node:fs/promises'
 import fsSync from 'node:fs'
@@ -6,6 +6,8 @@ import { randomBytes } from 'node:crypto'
 import { fileURLToPath } from 'node:url'
 import { IPC_CHANNELS } from '../shared/ipc'
 import type { CategoryRecord, DailyJournalFile, LogEntry, TagRecord, TypeRecord } from '../shared/journal'
+import type { CardInsightsResult } from '../shared/cardInsights'
+import type { AggregateRangeResult, DayAggregateRow } from '../shared/visualization'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -185,6 +187,102 @@ async function countTagUsageOnDisk(tagId: string): Promise<number> {
   return n
 }
 
+async function aggregateDailyRange(from: string, to: string): Promise<AggregateRangeResult> {
+  if (!ISO_DATE.test(from) || !ISO_DATE.test(to)) {
+    throw new Error('aggregateRange: invalid ISO date')
+  }
+  if (from > to) {
+    throw new Error('aggregateRange: from must be <= to')
+  }
+  const days: DayAggregateRow[] = []
+  for (const { isoDate, filePath } of await listDailyJsonFiles()) {
+    if (isoDate < from || isoDate > to) continue
+    const daily = await loadDailyFromPath(filePath, isoDate)
+    const typeCounts: Record<string, number> = {}
+    const categoryCounts: Record<string, number> = {}
+    const tagCounts: Record<string, number> = {}
+    for (const log of daily.logs) {
+      typeCounts[log.type] = (typeCounts[log.type] ?? 0) + 1
+      for (const c of log.categoryIds) {
+        categoryCounts[c] = (categoryCounts[c] ?? 0) + 1
+      }
+      for (const t of log.tagIds) {
+        tagCounts[t] = (tagCounts[t] ?? 0) + 1
+      }
+    }
+    days.push({
+      date: isoDate,
+      logCount: daily.logs.length,
+      typeCounts,
+      categoryCounts,
+      tagCounts,
+    })
+  }
+  days.sort((a, b) => a.date.localeCompare(b.date))
+  return { days }
+}
+
+function addCalendarDaysIso(isoDate: string, deltaDays: number): string {
+  const parts = isoDate.split('-').map(Number)
+  const y = parts[0]!
+  const m = parts[1]!
+  const d = parts[2]!
+  const dt = new Date(y, m - 1, d)
+  dt.setDate(dt.getDate() + deltaDays)
+  const yy = dt.getFullYear()
+  const mm = String(dt.getMonth() + 1).padStart(2, '0')
+  const dd = String(dt.getDate()).padStart(2, '0')
+  return `${yy}-${mm}-${dd}`
+}
+
+function enumerateDatesInclusive(from: string, to: string): string[] {
+  let a = from
+  let b = to
+  if (a > b) {
+    const s = a
+    a = b
+    b = s
+  }
+  const out: string[] = []
+  let cur = a
+  for (let i = 0; i < 4000 && cur <= b; i++) {
+    out.push(cur)
+    cur = addCalendarDaysIso(cur, 1)
+  }
+  return out
+}
+
+/** 로그 1건 이상인 날만 연속 일수(streak), 카드용 최근 35일(7×5) 히트맵 */
+async function computeCardInsights(asOf: string): Promise<CardInsightsResult> {
+  if (!ISO_DATE.test(asOf)) {
+    throw new Error('cardInsights: invalid ISO date')
+  }
+  const streakSearchDays = 800
+  const heatmapDays = 35
+  const wideFrom = addCalendarDaysIso(asOf, -streakSearchDays)
+  const agg = await aggregateDailyRange(wideFrom, asOf)
+  const counts = new Map<string, number>()
+  for (const row of agg.days) {
+    counts.set(row.date, row.logCount)
+  }
+
+  let streak = 0
+  let d = asOf
+  for (let i = 0; i < streakSearchDays + 1; i++) {
+    if ((counts.get(d) ?? 0) === 0) break
+    streak++
+    d = addCalendarDaysIso(d, -1)
+  }
+
+  const heatmapFrom = addCalendarDaysIso(asOf, -(heatmapDays - 1))
+  const heatmap = enumerateDatesInclusive(heatmapFrom, asOf).map((date) => ({
+    date,
+    logCount: counts.get(date) ?? 0,
+  }))
+
+  return { streak, heatmap }
+}
+
 async function stripTagFromDailyFilesOnDisk(tagId: string, skipIsoDate?: string): Promise<void> {
   for (const { filePath, isoDate } of await listDailyJsonFiles()) {
     if (skipIsoDate && isoDate === skipIsoDate) continue
@@ -292,6 +390,52 @@ function registerIpcHandlers(): void {
     const target = dailyFilePath(date)
     await writeDailyFileAtomic(payload, target)
   })
+
+  ipcMain.handle(
+    IPC_CHANNELS.AGGREGATE_RANGE,
+    async (_event, payload: unknown): Promise<AggregateRangeResult> => {
+      if (!payload || typeof payload !== 'object') throw new Error('aggregateRange: invalid payload')
+      const p = payload as Record<string, unknown>
+      const from = p['from']
+      const to = p['to']
+      if (typeof from !== 'string' || typeof to !== 'string') throw new Error('aggregateRange: from/to')
+      return aggregateDailyRange(from, to)
+    },
+  )
+
+  ipcMain.handle(IPC_CHANNELS.CARD_INSIGHTS, async (_event, payload: unknown): Promise<CardInsightsResult> => {
+    if (!payload || typeof payload !== 'object') throw new Error('cardInsights: invalid payload')
+    const asOfRaw = (payload as Record<string, unknown>)['asOfDate']
+    if (typeof asOfRaw !== 'string' || !ISO_DATE.test(asOfRaw)) throw new Error('cardInsights: asOfDate')
+    return computeCardInsights(asOfRaw)
+  })
+
+  ipcMain.handle(
+    IPC_CHANNELS.SAVE_PNG_DIALOG,
+    async (
+      _event,
+      payload: unknown,
+    ): Promise<{ ok: boolean; canceled?: boolean; filePath?: string }> => {
+      if (!payload || typeof payload !== 'object') throw new Error('savePngDialog: invalid payload')
+      const p = payload as Record<string, unknown>
+      const defaultFilename = p['defaultFilename']
+      const bytes = p['bytes']
+      if (typeof defaultFilename !== 'string') throw new Error('savePngDialog: defaultFilename')
+      if (!Array.isArray(bytes) || !bytes.every((b) => typeof b === 'number')) {
+        throw new Error('savePngDialog: bytes must be number[]')
+      }
+      const win = mainWindow ?? BrowserWindow.getFocusedWindow()
+      const { filePath, canceled } = await dialog.showSaveDialog(win ?? undefined, {
+        defaultPath: defaultFilename,
+        filters: [{ name: 'PNG 이미지', extensions: ['png'] }],
+      })
+      if (canceled || !filePath) {
+        return { ok: false, canceled: true }
+      }
+      await fs.writeFile(filePath, Uint8Array.from(bytes))
+      return { ok: true, filePath }
+    },
+  )
 }
 
 function createWindow(): void {

@@ -1,4 +1,6 @@
 import type { CategoryRecord, DailyJournalFile, TagRecord, TypeRecord } from '../types/journal'
+import type { CardInsightsResult } from '../../../shared/cardInsights'
+import type { AggregateRangeResult } from '../../../shared/visualization'
 
 /** preload에 노출되는 메서드 — 빠지면 예전 preload가 아직 메모리에 있는 경우가 많음 */
 const API_METHODS = [
@@ -11,6 +13,9 @@ const API_METHODS = [
   'deleteTag',
   'readDaily',
   'saveDaily',
+  'aggregateRange',
+  'cardInsights',
+  'savePngDialog',
 ] as const
 
 function getApi() {
@@ -64,4 +69,19 @@ export async function loadDaily(isoDate: string): Promise<DailyJournalFile> {
 
 export async function saveDaily(file: DailyJournalFile): Promise<void> {
   return getApi().saveDaily(file)
+}
+
+export async function aggregateRange(from: string, to: string): Promise<AggregateRangeResult> {
+  return getApi().aggregateRange(from, to)
+}
+
+export async function cardInsights(asOfIsoDate: string): Promise<CardInsightsResult> {
+  return getApi().cardInsights(asOfIsoDate)
+}
+
+export async function savePngDialog(
+  defaultFilename: string,
+  bytes: number[],
+): Promise<{ ok: boolean; canceled?: boolean; filePath?: string }> {
+  return getApi().savePngDialog(defaultFilename, bytes)
 }

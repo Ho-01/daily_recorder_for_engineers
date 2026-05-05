@@ -9,4 +9,7 @@ export const IPC_CHANNELS = {
   DELETE_TAG: 'journal:deleteTag',
   READ_DAILY: 'journal:readDaily',
   SAVE_DAILY: 'journal:saveDaily',
+  AGGREGATE_RANGE: 'journal:aggregateRange',
+  CARD_INSIGHTS: 'journal:cardInsights',
+  SAVE_PNG_DIALOG: 'journal:savePngDialog',
 } as const

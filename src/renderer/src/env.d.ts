@@ -6,6 +6,8 @@ interface ImportMetaEnv {
 }
 
 import type { CategoryRecord, DailyJournalFile, TagRecord, TypeRecord } from '../../shared/journal'
+import type { CardInsightsResult } from '../../shared/cardInsights'
+import type { AggregateRangeResult } from '../../shared/visualization'
 
 interface JournalApi {
   readTypes(): Promise<TypeRecord[]>
@@ -17,6 +19,12 @@ interface JournalApi {
   deleteTag(tagId: string, skipDailyIsoDate?: string): Promise<void>
   readDaily(isoDate: string): Promise<DailyJournalFile>
   saveDaily(file: DailyJournalFile): Promise<void>
+  aggregateRange(from: string, to: string): Promise<AggregateRangeResult>
+  cardInsights(asOfIsoDate: string): Promise<CardInsightsResult>
+  savePngDialog(
+    defaultFilename: string,
+    bytes: number[],
+  ): Promise<{ ok: boolean; canceled?: boolean; filePath?: string }>
 }
 
 interface Window {

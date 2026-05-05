@@ -2,18 +2,13 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import LogEntryCard from '../components/LogEntryCard'
 import * as journalApi from '../services/journalApi'
 import type { CategoryRecord, DailyJournalFile, LogEntry, TagRecord, TypeRecord } from '../types/journal'
+import { todayIso } from '../utils/date'
 import { nextLogId } from '../utils/logId'
 
-function todayIso(): string {
-  const d = new Date()
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
-}
+type LogSortMode = 'originalDesc' | 'original' | 'typeAsc' | 'typeDesc' | 'detailAsc' | 'detailDesc'
 
 export default function DailyPage() {
-  const [selectedDate, setSelectedDate] = useState(todayIso)
+  const [selectedDate, setSelectedDate] = useState(() => todayIso())
   const [daily, setDaily] = useState<DailyJournalFile | null>(null)
   const [types, setTypes] = useState<TypeRecord[]>([])
   const [categories, setCategories] = useState<CategoryRecord[]>([])
@@ -23,6 +18,11 @@ export default function DailyPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [dirty, setDirty] = useState(false)
+
+  const [logSearch, setLogSearch] = useState('')
+  const [filterTypeId, setFilterTypeId] = useState<string>('')
+  const [filterTagId, setFilterTagId] = useState<string>('')
+  const [sortMode, setSortMode] = useState<LogSortMode>('originalDesc')
 
   useEffect(() => {
     let cancelled = false
@@ -71,6 +71,53 @@ export default function DailyPage() {
   }, [selectedDate, loadDailyForDate])
 
   const defaultTypeId = useMemo(() => types[0]?.typeId ?? '', [types])
+
+  const typeLabel = useCallback(
+    (typeId: string) => types.find((t) => t.typeId === typeId)?.name ?? typeId,
+    [types],
+  )
+
+  const displayedLogs = useMemo(() => {
+    if (!daily) return [] as { log: LogEntry; index: number }[]
+    const q = logSearch.trim().toLowerCase()
+    let rows = daily.logs.map((log, index) => ({ log, index }))
+    if (filterTypeId) rows = rows.filter(({ log }) => log.type === filterTypeId)
+    if (filterTagId) rows = rows.filter(({ log }) => log.tagIds.includes(filterTagId))
+    if (q) {
+      rows = rows.filter(
+        ({ log }) =>
+          log.detail.toLowerCase().includes(q) || log.logId.toLowerCase().includes(q),
+      )
+    }
+    const cmp = (a: { log: LogEntry; index: number }, b: { log: LogEntry; index: number }) => {
+      switch (sortMode) {
+        case 'originalDesc':
+          return b.index - a.index
+        case 'original':
+          return a.index - b.index
+        case 'typeAsc': {
+          const c = typeLabel(a.log.type).localeCompare(typeLabel(b.log.type), 'ko')
+          return c !== 0 ? c : a.index - b.index
+        }
+        case 'typeDesc': {
+          const c = typeLabel(b.log.type).localeCompare(typeLabel(a.log.type), 'ko')
+          return c !== 0 ? c : a.index - b.index
+        }
+        case 'detailAsc': {
+          const c = a.log.detail.trim().localeCompare(b.log.detail.trim(), 'ko')
+          return c !== 0 ? c : a.index - b.index
+        }
+        case 'detailDesc': {
+          const c = b.log.detail.trim().localeCompare(a.log.detail.trim(), 'ko')
+          return c !== 0 ? c : a.index - b.index
+        }
+        default:
+          return a.index - b.index
+      }
+    }
+    rows.sort(cmp)
+    return rows
+  }, [daily, filterTagId, filterTypeId, logSearch, sortMode, typeLabel])
 
   const handleDateChange = (next: string) => {
     if (dirty) {
@@ -214,23 +261,91 @@ export default function DailyPage() {
             {daily.logs.length === 0 ? (
               <p className="muted">아직 로그가 없습니다. &quot;로그 추가&quot;로 항목을 만드세요.</p>
             ) : (
-              <ul className="log-list">
-                {daily.logs.map((log, index) => (
-                  <li key={log.logId}>
-                    <LogEntryCard
-                      log={log}
-                      types={types}
-                      categories={categories}
-                      tags={tags}
-                      selectedDateIso={selectedDate}
-                      onTagsRefresh={refreshTags}
-                      onTagRemovedProjectWide={stripTagFromAllLogsInDaily}
-                      onChange={(next) => updateLog(index, next)}
-                      onRemove={() => removeLog(index)}
+              <>
+                <div className="logs-filter-bar">
+                  <label className="field logs-filter-search">
+                    <span className="field-label">상세·ID 검색</span>
+                    <input
+                      type="search"
+                      className="field-control"
+                      value={logSearch}
+                      onChange={(e) => setLogSearch(e.target.value)}
+                      placeholder="상세 텍스트 또는 logId"
+                      autoComplete="off"
                     />
-                  </li>
-                ))}
-              </ul>
+                  </label>
+                  <label className="field inline">
+                    <span className="field-label">유형</span>
+                    <select
+                      className="field-control"
+                      value={filterTypeId}
+                      onChange={(e) => setFilterTypeId(e.target.value)}
+                    >
+                      <option value="">전체</option>
+                      {types.map((t) => (
+                        <option key={t.typeId} value={t.typeId}>
+                          {t.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="field inline">
+                    <span className="field-label">태그</span>
+                    <select
+                      className="field-control"
+                      value={filterTagId}
+                      onChange={(e) => setFilterTagId(e.target.value)}
+                    >
+                      <option value="">전체</option>
+                      {tags.map((t) => (
+                        <option key={t.tagId} value={t.tagId}>
+                          {t.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="field inline">
+                    <span className="field-label">정렬</span>
+                    <select
+                      className="field-control"
+                      value={sortMode}
+                      onChange={(e) => setSortMode(e.target.value as LogSortMode)}
+                    >
+                      <option value="originalDesc">추가 순서 (역순)</option>
+                      <option value="original">추가 순서</option>
+                      <option value="typeAsc">유형 (가나다)</option>
+                      <option value="typeDesc">유형 (역순)</option>
+                      <option value="detailAsc">상세 (가나다)</option>
+                      <option value="detailDesc">상세 (역순)</option>
+                    </select>
+                  </label>
+                  <p className="muted logs-filter-count" aria-live="polite">
+                    표시 {displayedLogs.length} / {daily.logs.length}건
+                  </p>
+                </div>
+
+                {displayedLogs.length === 0 ? (
+                  <p className="muted">조건에 맞는 로그가 없습니다. 필터를 바꿔 보세요.</p>
+                ) : (
+                  <ul className="log-list">
+                    {displayedLogs.map(({ log, index }) => (
+                      <li key={log.logId}>
+                        <LogEntryCard
+                          log={log}
+                          types={types}
+                          categories={categories}
+                          tags={tags}
+                          selectedDateIso={selectedDate}
+                          onTagsRefresh={refreshTags}
+                          onTagRemovedProjectWide={stripTagFromAllLogsInDaily}
+                          onChange={(next) => updateLog(index, next)}
+                          onRemove={() => removeLog(index)}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
             )}
           </div>
         </>
