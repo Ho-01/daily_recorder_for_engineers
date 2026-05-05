@@ -1,0 +1,54 @@
+.app {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1.25rem 1.5rem 2rem;
+}
+
+.app-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(127, 127, 127, 0.35);
+}
+
+.app-title {
+  font-size: 1.35rem;
+}
+
+.app-nav {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.app-nav button {
+  border-radius: 8px;
+  border: 1px solid rgba(127, 127, 127, 0.45);
+  padding: 0.45rem 0.9rem;
+  font-size: 0.95rem;
+  font-family: inherit;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.app-nav button:hover {
+  border-color: #646cff;
+}
+
+.app-nav button.active {
+  border-color: #646cff;
+  background: rgba(100, 108, 255, 0.15);
+}
+
+.app-main {
+  min-height: 12rem;
+}
+
+.page h2 {
+  font-size: 1.15rem;
+  margin-bottom: 0.75rem;
+}

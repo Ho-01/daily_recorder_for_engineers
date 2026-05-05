@@ -1,0 +1,7 @@
+{"typeId":"learning","name":"학습"}
+{"typeId":"development","name":"구현/개발"}
+{"typeId":"design","name":"설계"}
+{"typeId":"troubleshooting","name":"문제 해결"}
+{"typeId":"refactoring","name":"리팩토링"}
+{"typeId":"documentation","name":"문서화"}
+{"typeId":"communication","name":"커뮤니케이션"}
