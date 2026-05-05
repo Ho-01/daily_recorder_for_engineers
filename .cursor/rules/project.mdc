@@ -1,0 +1,53 @@
+---
+description: Daily Recorder for Engineers — stack, data rules, IPC, doc sources of truth
+alwaysApply: true
+---
+
+# Daily Recorder for Engineers (Cursor)
+
+## What this is
+
+Personal **local** desktop app: file-based daily dev growth journal under `data/`, React UI, visualization later (Instagram 1:1 card + in-app charts).
+
+## Stack
+
+- **Electron** via **electron-vite** (`electron.vite.config.ts`)
+- **React**, **TypeScript**, **Vite**
+- Local files only — **no database for MVP**
+- Charts: **Recharts** or **Chart.js** (pick one when implementing viz)
+
+## Hard rules
+
+- **Renderer must not** use Node `fs`, `path`, or `process` for file I/O — only **preload-exposed APIs** → **main IPC handlers** → **fs**
+- Keep **TypeScript types** for all persisted shapes (`src/renderer/src/types/journal.ts` aligns with docs)
+- **Schema / field names**: do not change JSON or JSONL contracts without updating **`docs/DATA_SCHEMA.md`** and code together
+- Never commit build artifacts: **`out/`**, **`release/`**, **`node_modules/`**, **`dist/`** (see `.gitignore`)
+
+## Data model (short)
+
+- **Type**: fixed list in `data/types.jsonl`; **exactly one** `type` per log (string = `typeId` value).
+- **Category**: semi-fixed `data/categories.jsonl`; **multiple** `categoryIds` per log; MVP UI may **not** add/remove categories (editing JSONL by hand is ok).
+- **Tag**: user-managed `data/tags.jsonl`; **multiple** `tagIds` per log; CRUD from UI.
+- **Daily**: one file `data/daily/YYYY-MM-DD_daily.json` per date.
+
+## Naming
+
+- Daily file: `YYYY-MM-DD_daily.json`
+- IDs: `cat_*`, `tag_*`; log ids `log_YYYYMMDD_###` unique **within that daily file**
+
+## Where to read
+
+- **`docs/DATA_SCHEMA.md`** — authoritative fields and examples
+- **`docs/DEVELOPMENT_GUIDE.md`** — IPC list, folder layout, implementation flow
+- **`docs/PROJECT_OVERVIEW.md`** — goals and scope for humans
+- **`docs/daily.md`** — original Korean design sketch (supplementary)
+
+## MVP priority
+
+1. Daily journal + logs CRUD, load/save daily JSON via IPC
+2. Select type, categories, tags from loaded lists
+3. Tag management (create/update/delete) via IPC
+4. Instagram 1:1 summary card
+5. Basic internal visualization (charts / heatmap / etc.)
+
+Prefer **small components**; keep file I/O out of UI components.
