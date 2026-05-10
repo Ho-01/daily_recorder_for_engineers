@@ -158,13 +158,13 @@ export default function DailySummaryCard({
       <div className="summary-card-mid">
         <div className="summary-card-mid-spacer summary-card-mid-spacer--top" aria-hidden="true" />
         <blockquote
-          className="summary-card-zone summary-card-zone--journal summary-card-quote"
+          className={`summary-card-zone summary-card-zone--journal summary-card-quote${journalText ? '' : ' summary-card-quote--empty'}`}
           title={journalText ? journalText : undefined}
         >
           {journalText ? (
             journalText
           ) : (
-            <span className="summary-card-placeholder">오늘의 한 줄 요약이 비어 있습니다.</span>
+            <span className="summary-card-placeholder">한 줄 요약 없음</span>
           )}
         </blockquote>
         <div className="summary-card-split">
@@ -193,20 +193,25 @@ export default function DailySummaryCard({
             ) : null}
           </>
         ) : (
-          <p className="summary-card-muted summary-card-todo-empty">할 일 없음</p>
+          <p className="summary-card-soft-hint summary-card-todo-empty">할 일 없음</p>
         )}
       </section>
 
       <aside className="summary-card-zone summary-card-zone--heatmap" aria-label="연속 일수와 최근 활동 히트맵">
         <div className="summary-card-heatmap-head">
           {insightsPending ? (
-            <p className="summary-card-streak-text summary-card-streak-text--pending">연속 기록 불러오는 중…</p>
+            <p className="summary-card-soft-hint summary-card-streak-text summary-card-streak-text--pending">
+              연속 기록 불러오는 중…
+            </p>
           ) : insights ? (
             <p className="summary-card-streak-text" title="카드 날짜부터 거슬러 올라가며, 로그가 1건 이상인 연속 일수">
               연속 기록 <strong>{insights.streak}</strong>일
             </p>
           ) : (
-            <p className="summary-card-streak-text summary-card-streak-text--na" title="통계를 불러오지 못했습니다">
+            <p
+              className="summary-card-soft-hint summary-card-streak-text summary-card-streak-text--na"
+              title="통계를 불러오지 못했습니다"
+            >
               연속 기록 —
             </p>
           )}
@@ -214,7 +219,7 @@ export default function DailySummaryCard({
         </div>
 
         {insightsPending ? (
-          <p className="summary-card-muted summary-card-insights-msg">히트맵 불러오는 중…</p>
+          <p className="summary-card-soft-hint summary-card-insights-msg">히트맵 불러오는 중…</p>
         ) : insights && insights.heatmap.length > 0 ? (
           <>
             <div
@@ -226,8 +231,8 @@ export default function DailySummaryCard({
                 const inCardMonth = isSameMonthAsCard(cell.date, daily.date)
                 const t = cell.logCount / heatmapMax
                 const bg = inCardMonth
-                  ? `rgba(100, 108, 255, ${0.12 + t * 0.68})`
-                  : `rgba(94, 118, 142, ${0.18 + t * 0.42})`
+                  ? `rgba(24, 26, 32, ${0.06 + t * 0.52})`
+                  : `rgba(24, 26, 32, ${0.04 + t * 0.32})`
                 return (
                   <span
                     key={cell.date}
@@ -245,7 +250,7 @@ export default function DailySummaryCard({
                     <span
                       className={`summary-card-heatmap-legend-swatch${inCardMonth ? '' : ' summary-card-heatmap-legend-swatch--muted'}`}
                       style={{
-                        backgroundColor: inCardMonth ? 'rgba(100, 108, 255, 0.52)' : 'rgba(94, 118, 142, 0.48)',
+                        backgroundColor: inCardMonth ? 'rgba(24, 26, 32, 0.35)' : 'rgba(24, 26, 32, 0.22)',
                       }}
                     />
                     <span className="summary-card-heatmap-legend-month">{label}</span>
@@ -255,7 +260,7 @@ export default function DailySummaryCard({
             ) : null}
           </>
         ) : !insights ? (
-          <p className="summary-card-muted summary-card-insights-msg">히트맵을 불러오지 못했습니다.</p>
+          <p className="summary-card-soft-hint summary-card-insights-msg">히트맵을 불러오지 못했습니다.</p>
         ) : null}
       </aside>
         </div>
@@ -292,7 +297,7 @@ export default function DailySummaryCard({
         ) : null}
 
         {logCount === 0 ? (
-          <p className="summary-card-muted">이 날짜에는 활동 로그가 없습니다.</p>
+          <p className="summary-card-soft-hint summary-card-meta-empty-log">활동 로그 없음</p>
         ) : null}
       </section>
 

@@ -16,7 +16,8 @@ import {
   YAxis,
 } from 'recharts'
 
-const PIE_COLORS = ['#646cff', '#4eba98', '#e8a838', '#e07070', '#9b7ed9', '#5ab0d4', '#c97aab', '#8bc34a']
+/** DESIGN.md — ink/muted grays + Binance Yellow (#fcd535) 악센트 1슬라이스 */
+const PIE_COLORS = ['#181a20', '#3d4450', '#707a8a', '#a8b0bc', '#fcd535', '#525a66', '#cdd1d6', '#eaecef']
 
 type Props = {
   aggregate: AggregateRangeResult | null
@@ -111,18 +112,18 @@ export default function VisualizeCharts({ aggregate, loading, types, categories,
         <div className="visualize-chart-tall">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={logsByDay} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(127,127,127,0.25)" />
-              <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 11 }} width={36} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#ebebeb" />
+              <XAxis dataKey="label" tick={{ fontSize: 11 }} stroke="#ebebeb" />
+              <YAxis allowDecimals={false} tick={{ fontSize: 11 }} width={36} stroke="#ebebeb" />
               <Tooltip
-                contentStyle={{ fontSize: 12 }}
+                contentStyle={{ fontSize: 12, borderRadius: 8, border: 'none', boxShadow: '0 0 0 1px #eaecef' }}
                 formatter={(v: number) => [`${v}건`, '로그']}
                 labelFormatter={(_, payload) => {
                   const row = payload?.[0]?.payload as { date?: string } | undefined
                   return row?.date ?? ''
                 }}
               />
-              <Bar dataKey="logs" fill="#646cff" radius={[4, 4, 0, 0]} name="로그" />
+              <Bar dataKey="logs" fill="#181a20" radius={[4, 4, 0, 0]} name="로그" />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -139,11 +140,14 @@ export default function VisualizeCharts({ aggregate, loading, types, categories,
         <div className="visualize-chart-short">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={logsByWeekday} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(127,127,127,0.25)" />
-              <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 11 }} width={36} />
-              <Tooltip contentStyle={{ fontSize: 12 }} formatter={(v: number) => [`${v}건`, '로그']} />
-              <Bar dataKey="logs" fill="#9b7ed9" radius={[4, 4, 0, 0]} name="로그" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#ebebeb" />
+              <XAxis dataKey="name" tick={{ fontSize: 11 }} stroke="#ebebeb" />
+              <YAxis allowDecimals={false} tick={{ fontSize: 11 }} width={36} stroke="#ebebeb" />
+              <Tooltip
+                contentStyle={{ fontSize: 12, borderRadius: 8, border: 'none', boxShadow: '0 0 0 1px #eaecef' }}
+                formatter={(v: number) => [`${v}건`, '로그']}
+              />
+              <Bar dataKey="logs" fill="#707a8a" radius={[4, 4, 0, 0]} name="로그" />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -171,7 +175,10 @@ export default function VisualizeCharts({ aggregate, loading, types, categories,
                       <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(v: number) => [`${v}건`, '']} />
+                  <Tooltip
+                    contentStyle={{ borderRadius: 8, border: 'none', boxShadow: '0 0 0 1px #eaecef' }}
+                    formatter={(v: number) => [`${v}건`, '']}
+                  />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
                 </PieChart>
               </ResponsiveContainer>
@@ -187,11 +194,14 @@ export default function VisualizeCharts({ aggregate, loading, types, categories,
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart layout="vertical" data={catBar} margin={{ top: 4, right: 12, left: 4, bottom: 4 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(127,127,127,0.25)" />
-                  <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} />
-                  <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 10 }} />
-                  <Tooltip formatter={(v: number) => [`${v}회`, '']} />
-                  <Bar dataKey="value" fill="#4eba98" radius={[0, 4, 4, 0]} name="횟수" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#ebebeb" />
+                  <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} stroke="#ebebeb" />
+                  <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 10 }} stroke="#ebebeb" />
+                  <Tooltip
+                    contentStyle={{ borderRadius: 8, border: 'none', boxShadow: '0 0 0 1px #eaecef' }}
+                    formatter={(v: number) => [`${v}회`, '']}
+                  />
+                  <Bar dataKey="value" fill="#181a20" radius={[0, 4, 4, 0]} name="횟수" />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -207,11 +217,14 @@ export default function VisualizeCharts({ aggregate, loading, types, categories,
           ) : (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart layout="vertical" data={tagBar} margin={{ top: 4, right: 12, left: 4, bottom: 4 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(127,127,127,0.25)" />
-                <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} />
-                <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 10 }} />
-                <Tooltip formatter={(v: number) => [`${v}회`, '']} />
-                <Bar dataKey="value" fill="#e8a838" radius={[0, 4, 4, 0]} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#ebebeb" />
+                <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} stroke="#ebebeb" />
+                <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 10 }} stroke="#ebebeb" />
+                <Tooltip
+                  contentStyle={{ borderRadius: 8, border: 'none', boxShadow: '0 0 0 1px #eaecef' }}
+                  formatter={(v: number) => [`${v}회`, '']}
+                />
+                <Bar dataKey="value" fill="#fcd535" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}

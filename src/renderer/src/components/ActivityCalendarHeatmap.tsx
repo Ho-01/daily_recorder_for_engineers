@@ -70,7 +70,8 @@ export default function ActivityCalendarHeatmap({ rangeFrom, rangeTo, days }: Pr
               }
               const n = countMap.get(iso) ?? 0
               const t = n / maxCount
-              const bg = `rgba(100, 108, 255, ${0.12 + t * 0.68})`
+              /* DESIGN.md — ink (#181a20) 기준 히트 농도 */
+              const bg = `rgba(24, 26, 32, ${0.06 + t * 0.52})`
               return (
                 <span
                   key={iso}

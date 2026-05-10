@@ -173,7 +173,7 @@ export default function WeeklySummaryCard({
         {loading ? (
           <p className="summary-card-muted weekly-summary-loading">주간 데이터 불러오는 중…</p>
         ) : showEmptyCopy ? (
-          <p className="summary-card-placeholder weekly-summary-empty">이번 주 기록이 없습니다.</p>
+          <p className="summary-card-soft-hint summary-card-placeholder weekly-summary-empty">이번 주 기록이 없습니다.</p>
         ) : totalLogs > 0 ? (
           <div className="weekly-summary-stats" aria-label="주간 요약 지표">
             <p className="weekly-summary-stats-line">
@@ -204,8 +204,8 @@ export default function WeeklySummaryCard({
               const t = c.logCount / heatMax
               const bg =
                 c.logCount === 0
-                  ? 'rgba(127, 127, 127, 0.12)'
-                  : `rgba(100, 108, 255, ${0.14 + t * 0.62})`
+                  ? 'rgba(24, 26, 32, 0.06)'
+                  : `rgba(24, 26, 32, ${0.08 + t * 0.48})`
               return (
                 <div key={c.date} className="weekly-heat-cell-wrap">
                   <span className="weekly-heat-dow">{c.dow}</span>
