@@ -2102,3 +2102,210 @@
   opacity: 0.55;
   cursor: not-allowed;
 }
+
+.quick-capture-tablist {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.28rem;
+  min-width: 0;
+}
+
+.quick-capture-tablist button {
+  border-radius: 8px;
+  border: 1px solid rgba(127, 127, 127, 0.45);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 0.62rem;
+  font-weight: 500;
+  line-height: 1.2;
+  padding: 0.28rem 0.55rem;
+  white-space: nowrap;
+}
+
+.quick-capture-tablist button.is-active {
+  border-color: rgba(100, 108, 255, 0.55);
+  background: rgba(100, 108, 255, 0.18);
+}
+
+.quick-capture-todos-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.38rem;
+  min-height: 0;
+  padding-top: 0.08rem;
+}
+
+.quick-capture-todos-status {
+  margin: 0;
+  font-size: 0.72rem;
+  opacity: 0.75;
+}
+
+.quick-capture-todos-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.quick-capture-todos-title {
+  font-size: 0.72rem;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+.quick-capture-todos-count {
+  font-size: 0.65rem;
+  opacity: 0.65;
+  font-variant-numeric: tabular-nums;
+}
+
+.quick-capture-todos-add {
+  display: flex;
+  gap: 0.35rem;
+  align-items: stretch;
+  flex-shrink: 0;
+}
+
+.quick-capture-todo-draft {
+  flex: 1;
+  min-width: 0;
+  border-radius: 8px;
+  border: 1px solid rgba(127, 127, 127, 0.45);
+  padding: 0.35rem 0.45rem;
+  font-size: 0.68rem;
+  font-family: inherit;
+  color: inherit;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+@media (prefers-color-scheme: light) {
+  .quick-capture-todo-draft {
+    background: rgba(255, 255, 255, 0.85);
+  }
+}
+
+.quick-capture-todo-add-btn {
+  flex-shrink: 0;
+  border-radius: 8px;
+  padding: 0.35rem 0.55rem;
+  font-size: 0.65rem;
+  cursor: pointer;
+  border: 1px solid rgba(127, 127, 127, 0.45);
+  background: transparent;
+  color: inherit;
+}
+
+.quick-capture-todo-add-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.quick-capture-todos-scroll {
+  flex: 1;
+  min-height: 3.5rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 2px;
+}
+
+.quick-capture-todos-empty {
+  margin: 0;
+  font-size: 0.66rem;
+  opacity: 0.55;
+  line-height: 1.4;
+}
+
+.quick-capture-todos-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+}
+
+.quick-capture-todo-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.quick-capture-todo-label {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+
+.quick-capture-todo-check {
+  margin-top: 0.2rem;
+  flex-shrink: 0;
+}
+
+.quick-capture-todo-title {
+  flex: 1;
+  min-width: 0;
+  border-radius: 6px;
+  border: 1px solid rgba(127, 127, 127, 0.35);
+  padding: 0.22rem 0.35rem;
+  font-size: 0.65rem;
+  font-family: inherit;
+  color: inherit;
+  background: rgba(0, 0, 0, 0.15);
+}
+
+@media (prefers-color-scheme: light) {
+  .quick-capture-todo-title {
+    background: rgba(255, 255, 255, 0.75);
+  }
+}
+
+.quick-capture-todo-actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 0.15rem;
+}
+
+.quick-capture-todo-move,
+.quick-capture-todo-remove {
+  padding: 0.15rem 0.28rem;
+  font-size: 0.62rem;
+  line-height: 1;
+  border-radius: 6px;
+  border: 1px solid rgba(127, 127, 127, 0.45);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.quick-capture-todo-move:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.quick-capture-todo-remove {
+  border-color: rgba(255, 107, 107, 0.45);
+}
+
+.quick-capture-todos-hint {
+  margin: 0;
+  font-size: 0.6rem;
+  line-height: 1.35;
+  opacity: 0.48;
+}
+
+.quick-capture-actions--solo {
+  justify-content: stretch;
+  margin-top: 0.15rem;
+}
+
+.quick-capture-actions--solo .quick-capture-main {
+  flex: 1;
+}

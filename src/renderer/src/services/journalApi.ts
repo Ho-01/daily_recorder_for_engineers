@@ -20,6 +20,7 @@ const API_METHODS = [
   'enterQuickCaptureMode',
   'exitQuickCaptureMode',
   'setCaptureContentSize',
+  'moveCaptureBy',
 ] as const
 
 function getApi() {
