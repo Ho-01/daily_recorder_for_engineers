@@ -1,21 +1,27 @@
 import html2canvas from 'html2canvas'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import DailySummaryCard from '../components/DailySummaryCard'
+import WeeklySummaryCard from '../components/WeeklySummaryCard'
 import VisualizeCharts from '../components/VisualizeCharts'
 import * as journalApi from '../services/journalApi'
 import type { CardInsightsResult } from '../../../shared/cardInsights'
 import type { AggregateRangeResult } from '../../../shared/visualization'
 import type { CategoryRecord, DailyJournalFile, TagRecord, TypeRecord } from '../types/journal'
-import { addCalendarDaysIso, todayIso } from '../utils/date'
+import { addCalendarDaysIso, enumerateDatesInclusive, startOfIsoWeekMonday, todayIso } from '../utils/date'
 
 type VisualSubTab = 'card' | 'charts'
+type CardKind = 'daily' | 'weekly'
 
 export default function VisualizePage() {
   const cardCaptureRef = useRef<HTMLDivElement>(null)
 
   const [subTab, setSubTab] = useState<VisualSubTab>('card')
+  const [cardKind, setCardKind] = useState<CardKind>('daily')
 
   const [selectedDate, setSelectedDate] = useState(() => todayIso())
+  const [weekMonday, setWeekMonday] = useState(() => startOfIsoWeekMonday(todayIso()))
+  const weekSunday = useMemo(() => addCalendarDaysIso(weekMonday, 6), [weekMonday])
+
   const [daily, setDaily] = useState<DailyJournalFile | null>(null)
   const [types, setTypes] = useState<TypeRecord[]>([])
   const [categories, setCategories] = useState<CategoryRecord[]>([])
@@ -23,6 +29,11 @@ export default function VisualizePage() {
   const [loadingMeta, setLoadingMeta] = useState(true)
   const [loadingDaily, setLoadingDaily] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  const [weeklyAggregate, setWeeklyAggregate] = useState<AggregateRangeResult | null>(null)
+  const [weeklyLoading, setWeeklyLoading] = useState(false)
+  const [weeklyError, setWeeklyError] = useState<string | null>(null)
+  const [weeklyJournalSnippets, setWeeklyJournalSnippets] = useState<Array<{ date: string; text: string }>>([])
 
   const [chartFrom, setChartFrom] = useState(() => addCalendarDaysIso(todayIso(), -13))
   const [chartTo, setChartTo] = useState(() => todayIso())
@@ -74,11 +85,12 @@ export default function VisualizePage() {
   }, [])
 
   useEffect(() => {
+    if (cardKind !== 'daily') return
     void loadDaily(selectedDate)
-  }, [selectedDate, loadDaily])
+  }, [selectedDate, loadDaily, cardKind])
 
   useEffect(() => {
-    if (loadingMeta || subTab !== 'card') return
+    if (loadingMeta || subTab !== 'card' || cardKind !== 'daily') return
     let cancelled = false
     ;(async () => {
       setCardInsightsPending(true)
@@ -94,7 +106,57 @@ export default function VisualizePage() {
     return () => {
       cancelled = true
     }
-  }, [selectedDate, subTab, loadingMeta])
+  }, [selectedDate, subTab, loadingMeta, cardKind])
+
+  useEffect(() => {
+    if (loadingMeta || subTab !== 'card' || cardKind !== 'weekly') return
+    let cancelled = false
+    const days = enumerateDatesInclusive(weekMonday, weekSunday)
+    ;(async () => {
+      setWeeklyLoading(true)
+      setWeeklyError(null)
+      try {
+        const settled = await Promise.allSettled([
+          journalApi.aggregateRange(weekMonday, weekSunday),
+          ...days.map((iso) => journalApi.loadDaily(iso)),
+        ])
+        if (cancelled) return
+
+        const aggSettled = settled[0]
+        if (aggSettled.status === 'fulfilled') {
+          setWeeklyAggregate(aggSettled.value)
+          setWeeklyError(null)
+        } else {
+          setWeeklyAggregate(null)
+          const msg =
+            aggSettled.reason instanceof Error ? aggSettled.reason.message : String(aggSettled.reason)
+          setWeeklyError(msg || '주간 집계를 불러오지 못했습니다.')
+        }
+
+        const snippets: Array<{ date: string; text: string }> = []
+        for (let i = 0; i < days.length; i++) {
+          const r = settled[i + 1]
+          if (r?.status !== 'fulfilled') continue
+          const text = r.value.journal?.trim() ?? ''
+          if (!text) continue
+          snippets.push({ date: days[i], text })
+          if (snippets.length >= 3) break
+        }
+        setWeeklyJournalSnippets(snippets)
+      } catch (e) {
+        if (!cancelled) {
+          setWeeklyAggregate(null)
+          setWeeklyJournalSnippets([])
+          setWeeklyError(e instanceof Error ? e.message : String(e))
+        }
+      } finally {
+        if (!cancelled) setWeeklyLoading(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [weekMonday, weekSunday, loadingMeta, subTab, cardKind])
 
   useEffect(() => {
     if (loadingMeta || subTab !== 'charts') return
@@ -124,7 +186,8 @@ export default function VisualizePage() {
 
   const exportCardPng = async () => {
     const el = cardCaptureRef.current
-    if (!el || !daily) return
+    if (!el) return
+    if (cardKind === 'daily' && !daily) return
     setPngBusy(true)
     try {
       const canvas = await html2canvas(el, {
@@ -139,7 +202,11 @@ export default function VisualizePage() {
       }
       const ab = await blob.arrayBuffer()
       const bytes = Array.from(new Uint8Array(ab))
-      const res = await journalApi.savePngDialog(`daily_${selectedDate}_card.png`, bytes)
+      const defaultName =
+        cardKind === 'daily'
+          ? `daily_${selectedDate}_card.png`
+          : `weekly_${weekMonday}_to_${weekSunday}_card.png`
+      const res = await journalApi.savePngDialog(defaultName, bytes)
       if (res.canceled) return
       if (res.ok && res.filePath) window.alert(`저장했습니다:\n${res.filePath}`)
       else window.alert('저장하지 못했습니다.')
@@ -150,14 +217,19 @@ export default function VisualizePage() {
     }
   }
 
-  const busy = loadingMeta || loadingDaily
+  const dailyBusy = loadingMeta || (cardKind === 'daily' && loadingDaily)
+  const pngDisabled =
+    pngBusy ||
+    loadingMeta ||
+    (cardKind === 'daily' && (loadingDaily || !daily)) ||
+    (cardKind === 'weekly' && weeklyLoading)
 
   return (
     <section className="page visualize-page">
       <header className="visualize-page-header">
         <h2>시각화</h2>
         <p className="muted visualize-lead">
-          <strong>요약 카드</strong>는 하루 스냅샷·PNG 저장용, <strong>기간 차트</strong>는 선택 구간 통계입니다. 아래 탭으로 전환합니다.
+          <strong>요약 카드</strong>에서 <strong>일간</strong>·<strong>주간</strong> 1:1 카드와 PNG 저장, <strong>기간 차트</strong>는 선택 구간 통계입니다. 아래 탭으로 전환합니다.
         </p>
       </header>
 
@@ -198,31 +270,97 @@ export default function VisualizePage() {
           role="tabpanel"
           aria-labelledby="visualize-tab-card"
         >
-          <div className="visualize-toolbar">
-            <label className="field inline">
-              <span className="field-label">카드 날짜</span>
-              <input
-                type="date"
-                className="field-control"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                disabled={busy}
-              />
-            </label>
-            <button type="button" className="tag-row-btn" onClick={() => setSelectedDate(todayIso())} disabled={busy}>
-              오늘
-            </button>
+          <div className="visualize-toolbar visualize-toolbar-card">
+            <div className="visualize-card-kind" role="group" aria-label="카드 종류">
+              <button
+                type="button"
+                className={cardKind === 'daily' ? 'active' : ''}
+                onClick={() => setCardKind('daily')}
+                disabled={loadingMeta}
+              >
+                일간
+              </button>
+              <button
+                type="button"
+                className={cardKind === 'weekly' ? 'active' : ''}
+                onClick={() => setCardKind('weekly')}
+                disabled={loadingMeta}
+              >
+                주간
+              </button>
+            </div>
+
+            {cardKind === 'daily' ? (
+              <>
+                <label className="field inline">
+                  <span className="field-label">카드 날짜</span>
+                  <input
+                    type="date"
+                    className="field-control"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    disabled={dailyBusy}
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="tag-row-btn"
+                  onClick={() => setSelectedDate(todayIso())}
+                  disabled={dailyBusy}
+                >
+                  오늘
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className="tag-row-btn"
+                  onClick={() => setWeekMonday(addCalendarDaysIso(weekMonday, -7))}
+                  disabled={loadingMeta}
+                >
+                  이전 주
+                </button>
+                <button
+                  type="button"
+                  className="tag-row-btn"
+                  onClick={() => setWeekMonday(addCalendarDaysIso(weekMonday, 7))}
+                  disabled={loadingMeta}
+                >
+                  다음 주
+                </button>
+                <button
+                  type="button"
+                  className="tag-row-btn"
+                  onClick={() => setWeekMonday(startOfIsoWeekMonday(todayIso()))}
+                  disabled={loadingMeta}
+                >
+                  이번 주
+                </button>
+                <label className="field inline">
+                  <span className="field-label">주 (월요일)</span>
+                  <input
+                    type="date"
+                    className="field-control"
+                    value={weekMonday}
+                    onChange={(e) => setWeekMonday(startOfIsoWeekMonday(e.target.value))}
+                    disabled={loadingMeta}
+                  />
+                </label>
+              </>
+            )}
+
             <button
               type="button"
               className="btn-primary visualize-png-btn"
-              disabled={busy || !daily || pngBusy}
+              disabled={pngDisabled}
               onClick={() => void exportCardPng()}
             >
               {pngBusy ? 'PNG 저장 중…' : '카드 PNG 저장'}
             </button>
           </div>
 
-          {!busy && daily ? (
+          {cardKind === 'daily' && !dailyBusy && daily ? (
             <div className="visualize-card-wrap">
               <div ref={cardCaptureRef} className="visualize-card-capture">
                 <DailySummaryCard
@@ -235,8 +373,24 @@ export default function VisualizePage() {
                 />
               </div>
             </div>
-          ) : !loadingMeta && loadingDaily ? (
+          ) : cardKind === 'daily' && !loadingMeta && loadingDaily ? (
             <p className="muted">일별 데이터 불러오는 중…</p>
+          ) : cardKind === 'weekly' && !loadingMeta ? (
+            <div className="visualize-card-wrap">
+              <div ref={cardCaptureRef} className="visualize-card-capture">
+                <WeeklySummaryCard
+                  weekMonday={weekMonday}
+                  weekSunday={weekSunday}
+                  aggregate={weeklyAggregate}
+                  loading={weeklyLoading}
+                  aggregateError={weeklyError}
+                  journalSnippets={weeklyJournalSnippets}
+                  types={types}
+                  categories={categories}
+                  tags={tags}
+                />
+              </div>
+            </div>
           ) : null}
         </div>
       ) : (

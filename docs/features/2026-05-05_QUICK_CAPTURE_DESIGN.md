@@ -10,7 +10,7 @@
 |------|------|
 | 생산성 | Daily 전체 화면을 열지 않고 **한두 번 클릭·입력**으로 로그 추가 |
 | 성장 흐름 | “기록을 남긴다”는 행동 자체의 비용을 낮춰 **연속 기록·회고**와 연결 |
-| 데이터 일관성 | 기존 `LogEntry`·`YYYY-MM-DD_daily.json` 계약 유지 ([DATA_SCHEMA.md](./DATA_SCHEMA.md)) |
+| 데이터 일관성 | 기존 `LogEntry`·`YYYY-MM-DD_daily.json` 계약 유지 ([DATA_SCHEMA.md](../DATA_SCHEMA.md)) |
 
 비목표(MVP): 풀 텍스트 검색, 클라우드 동기화, LLM 요약.
 
@@ -61,7 +61,7 @@
 
 ### 3.1 원칙
 
-- 렌더러는 **preload 노출 API만** 사용 ([DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md)).
+- 렌더러는 **preload 노출 API만** 사용 ([DEVELOPMENT_GUIDE.md](../DEVELOPMENT_GUIDE.md)).
 - 파일 읽기·쓰기·`logId` 생성은 **main**에서 처리하는 편이 안전(경합 한 곳에서 처리).
 
 ### 3.2 메인 창 처리 방식 (권장 vs 주의)
@@ -191,8 +191,8 @@ src/renderer/src/
 ## 9. 문서 연동
 
 - 스키마 필드 추가가 없으면 **DATA_SCHEMA.md 변경 불필요**(동작만 명시하고 싶으면 “빠른 캡처는 동일 LogEntry로 append” 한 줄 가능).
-- [DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md) IPC 표에 `appendLog` 반영.
-- [PROJECT_OVERVIEW.md](./PROJECT_OVERVIEW.md) 기능 목록에 한 줄 추가(선택).
+- [DEVELOPMENT_GUIDE.md](../DEVELOPMENT_GUIDE.md) IPC 표에 `appendLog` 반영.
+- [PROJECT_OVERVIEW.md](../PROJECT_OVERVIEW.md) 기능 목록에 한 줄 추가(선택).
 
 ---
 

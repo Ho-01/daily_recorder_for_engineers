@@ -64,3 +64,28 @@ export function formatDateLongKo(isoDate: string): string {
   if (Number.isNaN(dt.getTime())) return isoDate
   return dt.toLocaleDateString('ko-KR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
 }
+
+/** 해당 날짜가 속한 주의 월요일(로컬, 월요일 시작 주). */
+export function startOfIsoWeekMonday(isoDate: string): string {
+  const back = mondayFirstWeekdayIndex(isoDate)
+  return addCalendarDaysIso(isoDate, -back)
+}
+
+/** 월요일 기준 같은 주 일요일. */
+export function endOfIsoWeekSunday(mondayIso: string): string {
+  return addCalendarDaysIso(mondayIso, 6)
+}
+
+/** 사용자 표시용: `2026년 5월 5일 ~ 5월 11일` (연도 넘어가면 양쪽 연도 표기). */
+export function formatWeekRangeShortKo(mondayIso: string, sundayIso: string): string {
+  const y1 = mondayIso.slice(0, 4)
+  const y2 = sundayIso.slice(0, 4)
+  const m1 = Number(mondayIso.slice(5, 7))
+  const d1 = Number(mondayIso.slice(8, 10))
+  const m2 = Number(sundayIso.slice(5, 7))
+  const d2 = Number(sundayIso.slice(8, 10))
+  if (y1 === y2) {
+    return `${y1}년 ${m1}월 ${d1}일 ~ ${m2}월 ${d2}일`
+  }
+  return `${y1}년 ${m1}월 ${d1}일 ~ ${y2}년 ${m2}월 ${d2}일`
+}

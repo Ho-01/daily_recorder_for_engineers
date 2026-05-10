@@ -78,7 +78,7 @@
 
 순서는 **배열 순서**가 기준이다.
 
-자세한 제품·UI 범위는 [TODO_DESIGN.md](./TODO_DESIGN.md)를 본다.
+자세한 제품·UI 범위는 [features/2026-05-05_TODO_DESIGN.md](./features/2026-05-05_TODO_DESIGN.md)를 본다.
 
 ### Log entry
 

@@ -88,9 +88,11 @@ IPC 이름은 프로젝트에서 일관되게 정한다. 예시 역할:
 | **DailyPage** | 오늘(또는 선택일) 저널·로그 편집, 타입/카테고리/태그 선택, 저장, **일별 Todo 체크리스트(`todos`)** |
 | **VisualizePage** | 차트·1:1 카드 등 시각화(카드에 **같은 날 `todos` 요약** 표시 가능) |
 
-일별 Todo 데이터 모델·UI 범위는 [TODO_DESIGN.md](./TODO_DESIGN.md)를 본다.
+일별 Todo 데이터 모델·UI 범위는 [features/2026-05-05_TODO_DESIGN.md](./features/2026-05-05_TODO_DESIGN.md)를 본다.
 
-**빠른 캡처(인박스) 모드** — 우하단 미니 창으로 로그 한 건만 빠르게 넣는 기능은 설계·IPC·창 생명주기를 [QUICK_CAPTURE_DESIGN.md](./QUICK_CAPTURE_DESIGN.md)에 따른다.
+**빠른 캡처(인박스) 모드** — 우하단 미니 창으로 로그 한 건만 빠르게 넣는 기능은 설계·IPC·창 생명주기를 [features/2026-05-05_QUICK_CAPTURE_DESIGN.md](./features/2026-05-05_QUICK_CAPTURE_DESIGN.md)에 따른다.
+
+**주간 요약 카드** — 시각화 탭에서 주 단위 1:1 카드는 [features/2026-05-10_WEEKLY_SUMMARY_CARD_DESIGN.md](./features/2026-05-10_WEEKLY_SUMMARY_CARD_DESIGN.md)를 따른다.
 
 설정 전용 **SettingsPage**는 태그 관리를 별 화면으로 빼고 싶을 때 추가할 수 있다. MVP에서는 Daily 흐름 안에서 태그 CRUD를 넣어도 된다.
 

@@ -24,7 +24,7 @@ export interface LogEntry {
   detail: string
 }
 
-/** `data/daily/YYYY-MM-DD_daily.json` 의 `todos[]` — docs/DATA_SCHEMA.md · docs/TODO_DESIGN.md */
+/** `data/daily/YYYY-MM-DD_daily.json` 의 `todos[]` — docs/DATA_SCHEMA.md · docs/features/2026-05-05_TODO_DESIGN.md */
 export interface TodoItem {
   todoId: string
   title: string

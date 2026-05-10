@@ -652,6 +652,37 @@
   margin-left: 0.25rem;
 }
 
+.visualize-toolbar-card {
+  align-items: flex-start;
+}
+
+.visualize-card-kind {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-right: 0.35rem;
+}
+
+.visualize-card-kind button {
+  border-radius: 8px;
+  border: 1px solid rgba(127, 127, 127, 0.45);
+  padding: 0.38rem 0.75rem;
+  font-size: 0.88rem;
+  font-family: inherit;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.visualize-card-kind button:hover:not(:disabled) {
+  border-color: #646cff;
+}
+
+.visualize-card-kind button.active {
+  border-color: #646cff;
+  background: rgba(100, 108, 255, 0.15);
+}
+
 .visualize-chart-toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -978,6 +1009,161 @@
   border: 1px solid rgba(100, 108, 255, 0.25);
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.32);
   overflow: hidden;
+}
+
+.summary-card--weekly {
+  grid-template-rows: auto minmax(2.5rem, 1fr) auto auto;
+}
+
+.summary-card-mid--weekly {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+  gap: 0.38rem;
+  min-height: 0;
+  padding: 0.15rem 0 0.35rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.summary-card-week-sub {
+  margin: 0.28rem 0 0;
+  font-size: 0.52rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.45;
+}
+
+.summary-card-date--week {
+  font-size: 0.82rem;
+  line-height: 1.28;
+}
+
+.weekly-summary-stats-line {
+  margin: 0;
+  font-size: calc(0.78rem - 1pt);
+  line-height: 1.45;
+  opacity: 0.88;
+}
+
+.weekly-summary-stats-line strong {
+  font-weight: 700;
+}
+
+.weekly-summary-loading,
+.weekly-summary-empty {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.weekly-summary-soft {
+  margin: 0;
+  font-size: calc(0.74rem - 0.5pt);
+  line-height: 1.4;
+  opacity: 0.78;
+}
+
+.weekly-summary-aggregate-error {
+  margin: 0;
+  padding: 0.35rem 0.45rem;
+  border-radius: 8px;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: rgba(255, 200, 200, 0.92);
+  background: rgba(180, 60, 60, 0.22);
+  border: 1px solid rgba(255, 120, 120, 0.28);
+}
+
+.weekly-heat-row {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.22rem;
+  align-items: end;
+  width: 100%;
+  min-width: 0;
+  padding: 0.15rem 0 0;
+  border-top: 1px solid rgba(127, 127, 127, 0.18);
+}
+
+.weekly-heat-cell-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.weekly-heat-dow {
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  opacity: 0.55;
+}
+
+.weekly-heat-cell {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  max-height: 2rem;
+  border-radius: 5px;
+  border: 1px solid rgba(127, 127, 127, 0.18);
+  box-sizing: border-box;
+}
+
+.weekly-heat-n {
+  font-size: 0.58rem;
+  font-weight: 600;
+  opacity: 0.62;
+  line-height: 1;
+}
+
+.weekly-summary-streak-line {
+  margin: 0;
+  font-size: 0.72rem;
+  opacity: 0.82;
+}
+
+.weekly-summary-streak-line strong {
+  font-weight: 700;
+}
+
+.weekly-journal-snips {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.22rem;
+  min-width: 0;
+}
+
+.weekly-journal-snip {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.35rem;
+  align-items: start;
+  font-size: calc(0.72rem - 0.5pt);
+  line-height: 1.35;
+  color: rgba(236, 236, 244, 0.72);
+  min-width: 0;
+}
+
+.weekly-journal-snip-date {
+  flex-shrink: 0;
+  font-weight: 600;
+  opacity: 0.65;
+  font-variant-numeric: tabular-nums;
+}
+
+.weekly-journal-snip-text {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow-wrap: anywhere;
+  word-break: normal;
 }
 
 .summary-card-mid {

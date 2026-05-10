@@ -95,6 +95,6 @@
 
 | 문서 | 내용 |
 |------|------|
-| [DATA_SCHEMA.md](./DATA_SCHEMA.md) | 필드 표·예시 JSON |
-| [DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md) | IPC·페이지 역할 |
-| [PROJECT_OVERVIEW.md](./PROJECT_OVERVIEW.md) | 제품 범위 요약 |
+| [DATA_SCHEMA.md](../DATA_SCHEMA.md) | 필드 표·예시 JSON |
+| [DEVELOPMENT_GUIDE.md](../DEVELOPMENT_GUIDE.md) | IPC·페이지 역할 |
+| [PROJECT_OVERVIEW.md](../PROJECT_OVERVIEW.md) | 제품 범위 요약 |
